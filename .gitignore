@@ -1,0 +1,9 @@
+# Release signing key and its password: never commit. Back these up somewhere private.
+keys/
+
+# Build output (the shareable web build is mirrored into docs/)
+build/
+dist/
+*.idsig
+
+.DS_Store

@@ -1,2 +1,65 @@
-# Bugle_Ridge
-Cell Phone Game
+# Bugle Ridge
+
+An offline, one-thumb spot-and-stalk elk hunting game for your phone, built for playing on a hillside while you wait for a real elk to step out.
+
+**Colorado over-the-counter archery, seven days in the September rut.** Glass the hillside, plan a stalk against the wind and thermals, creep past the lead cow or call a bull in, make the shot, follow the blood trail, and then hear from Hank, an old outfitter, about what went wrong.
+
+## Play it
+
+- **Web, any phone including iPhone:** https://climbhigh09.github.io/Bugle_Ridge/
+  Open it once with signal, then use *Add to Home Screen*. After that it works with no signal.
+  *(This needs GitHub Pages turned on for the repo: Settings → Pages → Deploy from a branch → `main` / `/docs`.)*
+- **Android app:** [`docs/bugle-ridge.apk`](docs/bugle-ridge.apk). Open it, allow installing from that app, and tap *Install anyway* if Play Protect warns. On newer Samsung phones, turn off Auto Blocker first (Settings → Security and privacy).
+- **Design storyboard:** [`docs/storyboard/`](docs/storyboard/index.html)
+
+## How a day plays
+
+| Screen | What you do |
+|---|---|
+| Camp | Check the wind, the rut, and when the sun hits each slope. Thermals drain downhill until the sun warms a slope, then rise until evening. |
+| Glassing | Drag to pan. Press and hold for binoculars. Let go on an elk to mark it. |
+| Stalk plan | Tap the topo map for up to 4 waypoints (uphill is the top). Stay in cover, off deadfall and shale, and keep your scent off them. |
+| Stalk | Hold to creep, lift to freeze. Move only when the lead cow's head is down. The phone buzzes when she looks up. |
+| Calling | Cow mew, estrus, bugle, rake, wait, or slip crosswind. Bulls answer, hang up, or swing downwind. |
+| The shot | Press and hold to draw, slide the right pin onto the vitals, lift to shoot. Pins: 20 green, 30 yellow, 40 red. |
+| Blood trail | Read the arrow, pick how long to wait, then tap each drop of blood. |
+| Campfire | Hank names the one thing that went wrong, the skill fix, and, when gear really was the problem, the upgrade. |
+
+The practice range (offered the night before the opener, and any time from the menu) teaches the pins on a foam 3D elk at known yardage. Skipping it is allowed. It's its own penalty.
+
+## Built for the hill
+
+- Pixel art on a 180×240 canvas, redrawn only when something changes. Idle screens run at 0 fps, and time only passes while you're glassing or creeping.
+- Mostly near-black palette for OLED screens. Silent, no network, no ads, no tracking.
+- Saves on every decision and whenever you leave the app, so you can drop it the second a real elk shows up.
+- Ridge mode dims the app so your face doesn't glow.
+
+## Build it yourself
+
+Needs JDK 17, the Android SDK (build-tools 37.0.0, platform 34), and Node 20+. No Gradle.
+
+```bash
+./build.sh                 # debug APK → build/bugle-ridge.apk
+RELEASE=1 ./build.sh       # release APK → dist/bugle-ridge-<version>.apk (needs keys/, not in this repo)
+node tools/build-web.js    # web build → dist/web, dist/bugle-ridge-web.zip, and docs/ for GitHub Pages
+```
+
+Release signing reads `keys/bugle-ridge-release.jks` and `keys/release.properties` (`STORE_PASS='…'` and `KEY_ALIAS='bugleridge'`). They're git-ignored on purpose. To make your own:
+
+```bash
+mkdir -p keys && keytool -genkeypair -keystore keys/bugle-ridge-release.jks -storetype PKCS12 \
+  -alias bugleridge -keyalg RSA -keysize 4096 -validity 10000
+```
+
+## Layout
+
+| Path | What it is |
+|---|---|
+| `www/` | The game: plain HTML5 canvas and JavaScript, no dependencies |
+| `android/` | Thin WebView wrapper (fullscreen, vibration, Ridge-mode brightness, save on pause) |
+| `tools/build-web.js` | Offline PWA build, icons, single-file page, and the `docs/` mirror |
+| `docs/` | Generated GitHub Pages site, plus the hand-made storyboard |
+
+## Roadmap
+
+Colorado rifle season (cartridges, holdover, suppressors) → Idaho → Montana → Alaska moose.
