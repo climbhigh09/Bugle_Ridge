@@ -8,7 +8,6 @@ An offline, one-thumb spot-and-stalk elk hunting game for your phone, built for 
 
 - **Web, any phone including iPhone:** https://climbhigh09.github.io/Bugle_Ridge/
   Open it once with signal, then use *Add to Home Screen*. After that it works with no signal.
-  *(This needs GitHub Pages turned on for the repo: Settings → Pages → Deploy from a branch → `main` / `/docs`.)*
 - **Android app:** [`docs/bugle-ridge.apk`](docs/bugle-ridge.apk). Open it, allow installing from that app, and tap *Install anyway* if Play Protect warns. On newer Samsung phones, turn off Auto Blocker first (Settings → Security and privacy).
 - **Design storyboard:** [`docs/storyboard/`](docs/storyboard/index.html)
 
