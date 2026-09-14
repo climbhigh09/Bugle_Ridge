@@ -1,7 +1,7 @@
 {
   "name": "Bugle Ridge",
   "short_name": "Bugle Ridge",
-  "description": "Offline spot-and-stalk elk hunting.",
+  "description": "Offline spot-and-stalk elk and moose hunting.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

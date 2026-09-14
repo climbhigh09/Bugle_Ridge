@@ -1,8 +1,8 @@
 # Bugle Ridge
 
-An offline, one-thumb spot-and-stalk elk hunting game for your phone, built for playing on a hillside while you wait for a real elk to step out.
+An offline, one-thumb spot-and-stalk elk and moose hunting game for your phone, built for playing on a hillside while you wait for a real elk to step out.
 
-**Colorado over-the-counter archery, seven days in the September rut.** Glass the hillside, plan a stalk against the wind and thermals, creep past the lead cow or call a bull in, make the shot, follow the blood trail, and then hear from Hank, an old outfitter, about what went wrong.
+**Five seasons and an epilogue:** Colorado archery in the September rut, Colorado 2nd rifle on a cow tag, Idaho wolf country, Montana public land with grizzlies, an Alaska moose float hunt, and one more season with Grandpa Sam. Glass the hillside, plan a stalk against the wind and thermals, creep past the lead cow or call one in, make the shot, follow the blood trail, take care of the meat, and hear from Hank about what went wrong.
 
 ## Play it
 
@@ -15,16 +15,26 @@ An offline, one-thumb spot-and-stalk elk hunting game for your phone, built for 
 
 | Screen | What you do |
 |---|---|
-| Camp | Check the wind, the rut, and when the sun hits each slope. Thermals drain downhill until the sun warms a slope, then rise until evening. |
-| Glassing | Drag to pan. Press and hold for binoculars. Let go on an elk to mark it. |
+| Camp | Pick a campsite, choose where to get water and how to treat it, then check the wind, the rut, and when the sun hits each slope. |
+| Glassing | Drag to pan. Press and hold for binoculars. Let go on an animal to mark it. Nothing tells you what it is. |
 | Stalk plan | Tap the topo map for up to 4 waypoints (uphill is the top). Stay in cover, off deadfall and shale, and keep your scent off them. |
 | Stalk | Hold to creep, lift to freeze. Move only when the lead cow's head is down. The phone buzzes when she looks up. |
 | Calling | Cow mew, estrus, bugle, rake, wait, or slip crosswind. Bulls answer, hang up, or swing downwind. |
-| The shot | Press and hold to draw, slide the right pin onto the vitals, lift to shoot. Pins: 20 green, 30 yellow, 40 red. |
+| The shot | Bow: hold to draw, slide the right pin onto the vitals, lift to shoot (pins: 20 green, 30 yellow, 40 red). Rifle: zeroed at 200 yd; the hash marks are your 300/400/500 holds; hold into the wind. |
 | Blood trail | Read the arrow, pick how long to wait, then tap each drop of blood. |
+| Meat | Gutless and boned out, quarters on the bone, or whole; then where to hang it. Heat, sun and predators spoil it. |
 | Campfire | Hank names the one thing that went wrong, the skill fix, and, when gear really was the problem, the upgrade. |
 
-The practice range (offered the night before the opener, and any time from the menu) teaches the pins on a foam 3D elk at known yardage. Skipping it is allowed. It's its own penalty.
+The practice range (offered before the first season, and any time from the menu in bow seasons) teaches the pins on a foam 3D elk at known yardage. Skipping it is allowed. It's its own penalty.
+
+## Rules of the trail
+
+- Grandpa Sam tells you the tag rules before each season. Nobody reminds you in the field.
+- Shoot an illegal animal (wrong sex, no brow tines, wrong zone, sub-legal moose, no predator tag) and the season is over.
+- Wound one and lose it, and you spend the next day looking. A grizzly false charge also costs a day.
+- Don't fill your tag and you're back in Colorado next September, with your gear.
+- Drink untreated water from a bad source and there's a 1-in-8 chance of dysentery. Dysentery kills you and you start over with a new hunter. It can also just find you now and then, anywhere but Alaska.
+- Wolves and grizzlies are legal only with the tag.
 
 ## Built for the hill
 
@@ -61,4 +71,4 @@ mkdir -p keys && keytool -genkeypair -keystore keys/bugle-ridge-release.jks -sto
 
 ## Roadmap
 
-Colorado rifle season (cartridges, holdover, suppressors) → Idaho → Montana → Alaska moose.
+Graphics to the "5" target at 240×320, weather, and more ground in each state.

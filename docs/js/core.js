@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const BR = (window.BR = {});
-  BR.VERSION = '0.2.0';
+  BR.VERSION = '1.0.0';
   window.addEventListener('error', e => console.error('JS error: ' + e.message + ' @' + e.filename + ':' + e.lineno));
   const W = (BR.W = 180), H = (BR.H = 240);
 
@@ -257,17 +257,18 @@
   };
 
   // ---------- save / platform ----------
-  const KEY = 'bugle-ridge-save-v2';
+  const KEY = 'bugle-ridge-save-v3';
   BR.newGame = () => {
     BR.S = {
-      v: 1, seed: (Date.now() % 1000003) | 0, day: 1, days: 7, clock: 5.5, part: 'morning',
-      cash: 250, bow: 'scout', items: {}, strength: 0, practiced: 0, tag: null,
-      stats: { busts: 0, shots: 0, wounds: 0, bullsSpotted: 0, jobs: 0 },
-      events: [], lessons: {}, suggest: null, enc: null, ridge: false, scene: 'title', sceneArgs: null
+      v: 3, seed: (Date.now() % 1000003) | 0, year: 1, chapter: 0, day: 1, days: 7, clock: 5.5, part: 'morning',
+      cash: 250, bow: 'scout', rifle: null, items: {}, strength: 0, tag: null, tags: { wolf: false, grizzly: false, grizApplied: false },
+      camp: null, drank: false, skipDays: 0, guideSkill: 0, over: false, verdict: null, finished: false, range: null,
+      stats: { busts: 0, shots: 0, wounds: 0, spotted: 0, jobs: 0, seasons: 0, filled: 0, violations: 0, predators: 0 },
+      history: [], events: [], lesson: null, lessonDay: 0, suggest: null, enc: null, ridge: false, scene: 'title', sceneArgs: null
     };
   };
   BR.save = () => { try { localStorage.setItem(KEY, JSON.stringify(BR.S)); } catch (_) {} };
-  BR.load = () => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) { BR.S = s; return true; } } catch (_) {} return false; };
+  BR.load = () => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 3) { BR.S = s; return true; } } catch (_) {} return false; };
   BR.wipe = () => { try { localStorage.removeItem(KEY); } catch (_) {} };
   BR.pass = min => { BR.S.clock += min / 60; };
   BR.log = (type, data) => { BR.S.events.push(Object.assign({ type, day: BR.S.day, clock: BR.S.clock }, data || {})); };
@@ -305,26 +306,26 @@
     if (h) h(b.dataset.arg);
   });
 
-  const LEAVE_OK = ['camp', 'debrief', 'title', 'season', 'intro'];
+  const LEAVE_OK = ['camp', 'debrief', 'title', 'season', 'intro', 'sam', 'campsite'];
   BR.openMenu = () => {
-    const S = BR.S, here = S.scene, ok = LEAVE_OK.includes(here), why = 'Finish or leave this hunt first';
+    const S = BR.S, here = S.scene, ok = LEAVE_OK.includes(here), why = 'Finish or leave this hunt first', bowCh = BR.ch().weapon === 'bow';
     BR.showOverlay(`
       <div class="row"><span class="t hi">MENU</span><span class="dim">Day ${S.day}/${S.days} · ${BR.fmt(S.clock)} · $${S.cash}</span></div>
       <div class="list">
         ${BR.btn('resume', 'Resume', 'go')}
-        ${BR.btn('range', 'Practice range', '', null, !ok, ok ? 'Learn your pins. No time passes.' : why)}
+        ${bowCh ? BR.btn('range', 'Practice range', '', null, !ok, ok ? 'Learn your pins. No time passes.' : why) : ''}
         ${BR.btn('shop', 'Gear & shop', '', null, !ok, ok ? `$${S.cash} to spend` : why)}
         ${BR.btn('help', 'How to play')}
         ${BR.btn('ridge', 'Ridge mode: ' + (S.ridge ? 'ON' : 'off'), '', null, false, 'Dims the screen so your face doesn’t glow on the hill')}
-        ${BR.btn('new', 'Start a new season')}
+        ${BR.btn('new', 'Start over with a new hunter')}
       </div>`, {
       resume: () => BR.closeOverlay(),
       range: () => BR.go('range', { back: here }),
       shop: () => BR.go('shop', { back: here }),
       help: () => BR.openHelp(),
       ridge: () => { BR.setRidge(!S.ridge); BR.openMenu(); },
-      new: () => BR.confirm('Start over?', 'This wipes the season: day, cash, gear, and strength.', 'Wipe and start over', () => {
-        const ridge = BR.S.ridge; BR.newGame(); BR.S.ridge = ridge; BR.go('intro');
+      new: () => BR.confirm('Start over?', 'This wipes everything: chapter, cash, gear, and strength.', 'Wipe and start over', () => {
+        const ridge = BR.S.ridge; BR.newGame(); BR.S.ridge = ridge; BR.startSeason(0);
       })
     });
   };
@@ -336,7 +337,10 @@
       <p><b>Stalk plan.</b> Tap the map for up to 4 waypoints. Uphill is the top. Stay in cover, off noisy deadfall and shale, and keep your scent off them.</p>
       <p><b>Stalking.</b> Hold to creep, lift to freeze. Move only when the lead cow’s head is down. The phone buzzes when she looks up.</p>
       <p><b>Calling.</b> Match the call to the rut. Call, then wait. Bulls swing downwind; slip crosswind if he does.</p>
-      <p><b>The shot.</b> Press and hold on the screen to draw, slide to put the right pin on the vitals, lift to shoot. Your pins: ${BR.pinLegend(BR.bow().pins)}. Past your last pin, hold high.</p>
+      <p><b>Bow.</b> Press and hold on the screen to draw, slide to put the right pin on the vitals, lift to shoot. Your pins: ${BR.pinLegend(BR.bow().pins)}. Past your last pin, hold high.</p>
+      <p><b>Rifle.</b> Press and hold to shoulder the rifle, slide the crosshair onto the vitals, lift to shoot. Zeroed at 200 yards. The hash marks below the crosshair are your 300, 400 and 500-yard holds. Hold into the wind.</p>
+      <p><b>The tag.</b> Sam tells you the rules before each season. Nobody reminds you in the field. Shoot an illegal animal and the season is over.</p>
+      <p><b>Camp.</b> Pick a campsite, choose where to get water and whether to treat it, and take care of the meat after a kill. Untreated water from a bad source can kill you.</p>
       <p><b>Blood trail.</b> Read the arrow, pick how long to wait, then tap each drop of blood.</p>
     </div>
     ${BR.btn('menu', 'Back to menu')}`, { menu: () => BR.openMenu() });

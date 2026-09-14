@@ -6,8 +6,8 @@
 const fs = require('fs'), path = require('path'), zlib = require('zlib'), { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..'), WWW = path.join(ROOT, 'www'), DIST = path.join(ROOT, 'dist'), WEB = path.join(DIST, 'web');
-const SCRIPTS = ['core', 'data', 'camp', 'glass', 'stalk', 'call', 'shot', 'range', 'debrief'].map(n => `js/${n}.js`);
-const VERSION = '0.2.0';
+const SCRIPTS = ['core', 'data', 'sprites', 'animals', 'season', 'camp', 'glass', 'stalk', 'call', 'shot', 'range', 'debrief'].map(n => `js/${n}.js`);
+const VERSION = '1.0.0';
 const BUILD = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
 
 // ---------- icons: rasterise android/res/drawable/icon.xml (24×24 pixel art) to PNG ----------
@@ -84,7 +84,7 @@ fs.writeFileSync(path.join(WEB, 'index.html'), `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#07080b">
-<meta name="description" content="Bugle Ridge: an offline spot-and-stalk elk hunting game. Colorado archery in the September rut.">
+<meta name="description" content="Bugle Ridge: an offline spot-and-stalk elk and moose hunting game, Colorado to Alaska.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -109,7 +109,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || /^(localh
 `);
 
 fs.writeFileSync(path.join(WEB, 'manifest.webmanifest'), JSON.stringify({
-  name: 'Bugle Ridge', short_name: 'Bugle Ridge', description: 'Offline spot-and-stalk elk hunting.',
+  name: 'Bugle Ridge', short_name: 'Bugle Ridge', description: 'Offline spot-and-stalk elk and moose hunting.',
   id: './', start_url: './', scope: './', display: 'standalone', orientation: 'portrait',
   background_color: '#07080b', theme_color: '#07080b',
   icons: [
@@ -140,7 +140,7 @@ if (fs.existsSync(apk)) fs.copyFileSync(apk, path.join(WEB, 'bugle-ridge.apk'));
 // Single-file page for a Claude artifact: inline everything (the host supplies doctype/head/body).
 const css = fs.readFileSync(path.join(WWW, 'style.css'), 'utf8');
 const js = SCRIPTS.map(s => fs.readFileSync(path.join(WWW, s), 'utf8')).join('\n');
-fs.writeFileSync(path.join(DIST, 'artifact.html'), `<title>Bugle Ridge Colorado Archery</title>
+fs.writeFileSync(path.join(DIST, 'artifact.html'), `<title>Bugle Ridge</title>
 <style>
 ${css}</style>
 ${APP}
