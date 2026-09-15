@@ -131,9 +131,20 @@
     draw(g) {
       g.drawImage(BR.archery.meadowBg(false, BR.ch().look), 0, 0);
       g.drawImage(this.spr.canvas, this.pos.dx, this.pos.dy);
-      const v = this.vit;
-      for (let a = 0; a < 360; a += 8) R(g, v.x + Math.cos(a * Math.PI / 180) * v.rx, v.y + Math.sin(a * Math.PI / 180) * v.ry, 1, 1, '#4a3a28');
-      R(g, v.x - 1, v.y - 1, 2, 2, '#4a3a28');
+      // scoring lines like a 3D foam target: the vital ring and the heart ring inside it
+      const v = this.vit, z = BR.SPR.vitals('elk'), px = this.spr.px;
+      const ring = (cx, cy, rx, ry, col, w) => {
+        const steps = Math.max(48, Math.round((rx + ry) * 8));
+        for (let i = 0; i < steps; i++) {
+          const t = i / steps * Math.PI * 2;
+          R(g, Math.round(cx + Math.cos(t) * rx), Math.round(cy + Math.sin(t) * ry), w, w, col);
+        }
+      };
+      const hcx = this.pos.dx + this.spr.cx + z.heart[0] * px, hcy = this.pos.dy + this.spr.gy + z.heart[1] * px, hr = Math.max(1.5, z.heart[2] * px);
+      ring(v.x, v.y, v.rx + 0.8, v.ry + 0.8, '#f2e6c8', 1);
+      ring(v.x, v.y, v.rx, v.ry, '#2a1c10', px > 0.5 ? 2 : 1);
+      ring(hcx, hcy, hr, hr, '#b3372f', 1);
+      if (px > 0.45) { R(g, Math.round(v.x - v.rx - 7), Math.round(v.y - 3), 5, 1, '#2a1c10'); R(g, Math.round(v.x + v.rx + 3), Math.round(v.y - 3), 5, 1, '#2a1c10'); }
       for (const ar of this.arrows) {
         const x = Math.round(ar.x), y = Math.round(ar.y);
         if (this.rifle) { R(g, x - 1, y - 1, 3, 3, '#111111'); R(g, x, y, 1, 1, '#e9dfcb'); }

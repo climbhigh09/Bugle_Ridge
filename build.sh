@@ -9,7 +9,7 @@ SDK="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 BT="$SDK/build-tools/37.0.0"
 JAR="$SDK/platforms/android-34/android.jar"
 OUT=build
-VERSION_NAME=1.2.0
+VERSION_NAME=1.2.1
 VERSION_CODE="${VERSION_CODE:-$(date +%s | cut -c1-9)}"
 
 rm -rf "$OUT"

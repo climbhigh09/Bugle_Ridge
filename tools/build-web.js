@@ -7,7 +7,7 @@ const fs = require('fs'), path = require('path'), zlib = require('zlib'), { exec
 
 const ROOT = path.resolve(__dirname, '..'), WWW = path.join(ROOT, 'www'), DIST = path.join(ROOT, 'dist'), WEB = path.join(DIST, 'web');
 const SCRIPTS = ['core', 'data', 'sprites', 'animals', 'season', 'camp', 'glass', 'stalk', 'call', 'shot', 'range', 'debrief'].map(n => `js/${n}.js`);
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const BUILD = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
 
 // ---------- icons: rasterise android/res/drawable/icon.xml (24×24 pixel art) to PNG ----------

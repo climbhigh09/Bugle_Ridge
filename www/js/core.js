@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const BR = (window.BR = {});
-  BR.VERSION = '1.2.0';
+  BR.VERSION = '1.2.1';
   window.addEventListener('error', e => console.error('JS error: ' + e.message + ' @' + e.filename + ':' + e.lineno));
   const W = (BR.W = 240), H = (BR.H = 320);
 
@@ -175,6 +175,7 @@
 
   // ---------- scene manager: draws only when asked, ticks at ≤30 fps only while a scene animates ----------
   const cv = document.getElementById('scene');
+  cv.width = W; cv.height = H;  // the bitmap must match the drawing size, whatever the page markup says
   const g = (BR.g = cv.getContext('2d'));
   g.imageSmoothingEnabled = false;
   const hudEl = document.getElementById('hud');
