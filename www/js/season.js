@@ -33,13 +33,16 @@
     enter() { this.msg = null; this.hud(); },
     draw(g) {
       BR.campArt(g, 'night');
-      BR.sprite(g, BR.HUNT_SIT, BR.HSCOL, 138, 176, 2, true);
-      if (!BR.ch().guide) { R(g, 142, 184, 3, 5, '#1a1a1a'); R(g, 143, 185, 1, 3, '#9fd0e8'); }
-      else BR.sprite(g, BR.MENTOR, BR.MCOL, 70, 162, 2, false);
+      BR.sprite(g, BR.HUNT_SIT, BR.HSCOL, 190, 238, 2, true);
+      if (!BR.ch().guide) { R(g, 194, 247, 3, 6, '#1a1a1a'); R(g, 195, 248, 1, 4, '#9fd0e8'); }
+      else BR.sprite(g, BR.MENTOR, BR.MCOL, 96, 222, 2, false);
     },
     hud() {
       const S = BR.S, ch = BR.ch(), guide = ch.guide;
-      const lines = (S.chapter === 0 && S.year === 1 ? ['You’re taking a week off from the city. Grandpa Sam calls the night before you leave.'] : []).concat(ch.sam);
+      const seen = S.samSeen[ch.id] || 0;
+      const opener = S.chapter === 0 && S.year === 1 && !seen ? 'You’re taking a week off from the city. Grandpa Sam calls the night before you leave.'
+        : seen ? ['“Same rules as last time. Humor me.”', '“You know this. I’m telling you anyway.”', '“Write it on your hand this year.”'][seen % 3] : null;
+      const lines = (opener ? [opener] : []).concat(ch.sam);
       let extra = '';
       if (ch.wolfTag) extra += BR.btn('wolf', S.tags.wolf ? 'Wolf tag · bought' : `Buy a wolf tag · $${ch.wolfTag}`, '', null, S.tags.wolf || S.cash < ch.wolfTag);
       if (ch.grizDraw) extra += BR.btn('griz', S.tags.grizApplied ? (S.tags.grizzly ? 'Grizzly draw · you drew a tag' : 'Grizzly draw · unsuccessful') : 'Apply for the grizzly draw · $15', '', null, S.tags.grizApplied || S.cash < 15, S.tags.grizApplied ? '' : 'Odds are about 1 in 20');
@@ -53,7 +56,7 @@
       const S = BR.S, ch = BR.ch();
       if (a === 'wolf' && !S.tags.wolf && S.cash >= ch.wolfTag) { S.cash -= ch.wolfTag; S.tags.wolf = true; BR.save(); this.hud(); }
       else if (a === 'griz' && !S.tags.grizApplied && S.cash >= 15) { S.cash -= 15; S.tags.grizApplied = true; S.tags.grizzly = Math.random() < 0.05; BR.save(); this.hud(); }
-      else if (a === 'go') BR.go('campsite');
+      else if (a === 'go') { S.samSeen[ch.id] = (S.samSeen[ch.id] || 0) + 1; BR.go('campsite'); }
     },
     back() { BR.go('title'); }
   };
@@ -74,8 +77,7 @@
       if (a !== 'camp') return;
       S.camp = arg;
       BR.log('camp', { camp: arg });
-      if (S.chapter === 0 && !(S.range && S.range.done) && !S.rangeOffered) { S.rangeOffered = true; BR.go('intro'); }
-      else BR.go('camp');
+      if (BR.needsRange()) BR.go('intro'); else BR.go('camp');
     },
     back() { BR.go('sam'); }
   };
@@ -98,7 +100,7 @@
     draw(g) {
       const e = BR.S.enc, a = e.shotResult.animal;
       g.drawImage(BR.scenes.recover.groundCanvas(e.rec ? e.rec.seed : 7), 0, 0);
-      BR.SPR.draw(g, BR.SPR.get(a, 'dead', a.sp === 'moose' ? 0.8 : 1), 90, 170);
+      BR.SPR.draw(g, BR.SPR.get(a, 'dead', a.sp === 'moose' ? 1 : 1.3), 120, 226);
     },
     hud() {
       const S = BR.S, e = S.enc, m = e.meat, ch = BR.ch(), a = e.shotResult.animal;
@@ -150,7 +152,6 @@
       }
       BR.draw(); this.hud(); BR.save();
     },
-    back() {}
   };
 
   // ---------------- death ----------------
@@ -158,9 +159,9 @@
     enter() { const S = BR.S; S.stats.seasons++; this.years = S.year; this.hud(); },
     draw(g) {
       BR.campArt(g, 'night');
-      R(g, 66, 150, 48, 60, '#6b6f73'); R(g, 70, 146, 40, 8, '#6b6f73'); R(g, 66, 150, 48, 2, '#8a8e92'); R(g, 112, 150, 2, 60, '#4a4e52');
-      R(g, 76, 164, 28, 2, '#3a3e42'); R(g, 80, 172, 20, 2, '#3a3e42'); R(g, 78, 180, 24, 2, '#3a3e42');
-      R(g, 60, 208, 60, 4, '#2a2318');
+      R(g, 88, 200, 64, 80, '#6b6f73'); R(g, 93, 195, 54, 10, '#6b6f73'); R(g, 88, 200, 64, 3, '#8a8e92'); R(g, 149, 200, 3, 80, '#4a4e52');
+      R(g, 101, 219, 37, 3, '#3a3e42'); R(g, 107, 229, 27, 3, '#3a3e42'); R(g, 104, 240, 32, 3, '#3a3e42');
+      R(g, 80, 277, 80, 5, '#2a2318');
     },
     hud() {
       BR.hud(`
@@ -186,7 +187,7 @@
     draw(g) {
       BR.campArt(g, 'night');
       const t = BR.S.tag;
-      if (t && this.filled) BR.SPR.draw(g, BR.SPR.get({ sp: t.sp, sex: /cow/.test(t.desc) ? 'cow' : 'bull', pts: 6, spread: 52, brows: 4 }, 'dead', 0.7), 50, 214);
+      if (t && this.filled) BR.SPR.draw(g, BR.SPR.get({ sp: t.sp, sex: /cow/.test(t.desc) ? 'cow' : 'bull', pts: 6, spread: 52, brows: 4 }, 'dead', 0.9), 60, 290);
     },
     hud() {
       const S = BR.S, ch = BR.ch(), t = S.tag, st = S.stats, last = S.chapter >= BR.CHAPTERS.length - 1;
@@ -214,25 +215,44 @@
       if (this.filled) {
         S.cash += 400;
         if (S.chapter >= BR.CHAPTERS.length - 1) { S.finished = true; BR.go('finale'); }
-        else BR.startSeason(S.chapter + 1);
+        else BR.go('bridge', { to: S.chapter + 1 });
       } else { S.year++; BR.startSeason(0); }
-    },
-    back() {}
+    }
   };
 
+
+  // ---------------- between chapters: a few lines of story, never more ----------------
+  const BRIDGE = {
+    1: ['Hank drops a cow tag application on your dash in September. “Rifle season. Same country, harder elk.”'],
+    2: ['Hank’s knee gives out on the pack-out. “Idaho’s still on,” he says. “I’ll run the radio from the trailhead.”'],
+    3: ['A satellite message from Hank: “Montana. Public land, grizzlies, and a lot of orange. Hunt where they aren’t.”'],
+    4: ['Hank calls in the spring. “One more float. Alaska. Book it before I come to my senses.”'],
+    5: ['Hank’s float was his last trip. He gives you his coffee mug at the airstrip.', 'A year later Sam calls. He wants one more elk season, and he wants you to take him.']
+  };
+  BR.scenes.bridge = {
+    enter(a) { this.to = a && a.to != null ? a.to : BR.S.chapter + 1; this.hud(); },
+    draw(g) { BR.campArt(g, 'evening'); BR.fireFolk(g); },
+    hud() {
+      const next = BR.CHAPTERS[this.to];
+      BR.hud(`
+        <div class="row"><span class="t hi">${next.name.toUpperCase()}</span><span class="dim">${next.sub}</span></div>
+        <div class="list">${(BRIDGE[this.to] || []).map(l => `<div class="quote">${BR.esc(l)}</div>`).join('')}</div>
+        <div class="sp"></div>${BR.btn('go', 'Keep going', 'go')}`);
+    },
+    act() { BR.startSeason(this.to); }
+  };
   // ---------------- finale / free play ----------------
   BR.scenes.finale = {
     enter() { this.hud(); },
     draw(g) {
       BR.campArt(g, 'night');
-      BR.sprite(g, BR.MENTOR, BR.MCOL, 70, 162, 2, false);
-      BR.sprite(g, BR.HUNT_SIT, BR.HSCOL, 138, 176, 2, true);
+      BR.fireFolk(g);
     },
     hud() {
       const S = BR.S, st = S.stats;
       BR.hud(`
         <div class="row"><span class="t hi">THE TRAIL’S DONE</span><span class="dim">Year ${S.year}</span></div>
-        <div class="quote">Sam sits by the fire a while and doesn’t say much. “Same time next year,” he says.</div>
+        <div class="quote">Sam sits by the fire a while with Hank’s old mug and doesn’t say much. “Same time next year,” he says.</div>
         <div class="row sm"><span class="dim">${st.seasons} seasons · ${st.filled} tags filled · ${st.predators} predators · ${st.violations} violations</span></div>
         <div class="list">${BR.CHAPTERS.map((c, i) => BR.btn('hunt', `${c.name}: ${c.sub}`, '', i)).join('')}</div>`);
     },

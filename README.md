@@ -9,7 +9,18 @@ An offline, one-thumb spot-and-stalk elk and moose hunting game for your phone, 
 - **Web, any phone including iPhone:** https://climbhigh09.github.io/Bugle_Ridge/
   Open it once with signal, then use *Add to Home Screen*. After that it works with no signal.
 - **Android app:** [`docs/bugle-ridge.apk`](docs/bugle-ridge.apk). Open it, allow installing from that app, and tap *Install anyway* if Play Protect warns. On newer Samsung phones, turn off Auto Blocker first (Settings → Security and privacy).
-- **Design storyboard:** [`docs/storyboard/`](docs/storyboard/index.html)
+- **Design storyboard:** [`docs/storyboard/`](https://climbhigh09.github.io/Bugle_Ridge/storyboard/)
+
+## Updates
+
+From 1.1 on, both the web version and the Android app load the game from GitHub Pages every time they open with signal, and keep a copy for when you're out of service.
+
+1. Change the game in `www/`.
+2. Run `node tools/build-web.js`. This refreshes `docs/`.
+3. Commit and push to `main`. GitHub Pages redeploys in about a minute.
+4. Close and reopen the game on any phone with signal. The title screen says **Updated to vX.Y.Z**.
+
+You only need to reinstall the APK if `android/` changes (the wrapper itself). Saves live on the phone, not in the repo, so updates keep them.
 
 ## How a day plays
 
@@ -18,7 +29,7 @@ An offline, one-thumb spot-and-stalk elk and moose hunting game for your phone, 
 | Camp | Pick a campsite, choose where to get water and how to treat it, then check the wind, the rut, and when the sun hits each slope. |
 | Glassing | Drag to pan. Press and hold for binoculars. Let go on an animal to mark it. Nothing tells you what it is. |
 | Stalk plan | Tap the topo map for up to 4 waypoints (uphill is the top). Stay in cover, off deadfall and shale, and keep your scent off them. |
-| Stalk | Hold to creep, lift to freeze. Move only when the lead cow's head is down. The phone buzzes when she looks up. |
+| Stalk | Hold to move, lift to freeze. You hike when you're far out and hidden, sneak in the middle, and creep inside 60 yards. Move only when the lead animal's head is down. The phone buzzes when she looks up. |
 | Calling | Cow mew, estrus, bugle, rake, wait, or slip crosswind. Bulls answer, hang up, or swing downwind. |
 | The shot | Bow: hold to draw, slide the right pin onto the vitals, lift to shoot (pins: 20 green, 30 yellow, 40 red). Rifle: zeroed at 200 yd; the hash marks are your 300/400/500 holds; hold into the wind. |
 | Blood trail | Read the arrow, pick how long to wait, then tap each drop of blood. |
@@ -30,7 +41,7 @@ The practice range (offered before the first season, and any time from the menu 
 ## Rules of the trail
 
 - Grandpa Sam tells you the tag rules before each season. Nobody reminds you in the field.
-- Shoot an illegal animal (wrong sex, no brow tines, wrong zone, sub-legal moose, no predator tag) and the season is over.
+- Shoot an illegal animal (wrong sex, no brow tines, wrong zone, sub-legal moose, no predator tag, outside legal light) and the season is over.
 - Wound one and lose it, and you spend the next day looking. A grizzly false charge also costs a day.
 - Don't fill your tag and you're back in Colorado next September, with your gear.
 - Drink untreated water from a bad source and there's a 1-in-8 chance of dysentery. Dysentery kills you and you start over with a new hunter. It can also just find you now and then, anywhere but Alaska.
@@ -38,8 +49,8 @@ The practice range (offered before the first season, and any time from the menu 
 
 ## Built for the hill
 
-- Pixel art on a 180×240 canvas, redrawn only when something changes. Idle screens run at 0 fps, and time only passes while you're glassing or creeping.
-- Mostly near-black palette for OLED screens. Silent, no network, no ads, no tracking.
+- Pixel art on a 240×320 canvas, redrawn only when something changes. Idle screens run at 0 fps, and time only passes while you're glassing or creeping.
+- Mostly near-black palette for OLED screens. Silent, no ads, no tracking. The only network use is fetching game updates from GitHub Pages.
 - Saves on every decision and whenever you leave the app, so you can drop it the second a real elk shows up.
 - Ridge mode dims the app so your face doesn't glow.
 
@@ -71,4 +82,4 @@ mkdir -p keys && keytool -genkeypair -keystore keys/bugle-ridge-release.jks -sto
 
 ## Roadmap
 
-Graphics to the "5" target at 240×320, weather, and more ground in each state.
+Weather, walk cycles, pack-out days, and more ground in each state.

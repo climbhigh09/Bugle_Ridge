@@ -15,13 +15,13 @@
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const o = c.getContext('2d'); o.imageSmoothingEnabled = false;
     const snow = look === 'snow';
-    BR.bands(o, [[0, '#0b130e'], [120, '#15221a'], [170, '#1b2a1f']]);
-    for (let Y = 0; Y < 175; Y++) for (let X = 0; X < W; X++) { const s = (X + Y * 0.55) % 56; if (s < 9 && BR.BAYER[(Y & 3) * 4 + (X & 3)] < 0.45 * (1 - Math.abs(s - 4.5) / 4.5) * (1 - Y / 220)) R(o, X, Y, 1, 1, '#2f4533'); }
-    for (let X = -4; X < W; X += 7) BR.pine(o, X, 150 + ((X * 3) % 8), 60 + ((X * 7) % 18), '#1a2c20');
-    for (let X = 2; X < W; X += 13) BR.pine(o, X, 172 + ((X * 5) % 6), 78 + ((X * 11) % 20), '#132219');
-    BR.bands(o, [[168, snow ? '#8a949e' : '#24301f'], [H, snow ? '#5a646e' : '#161e14']]);
-    BR.grass(o, 170, 900, 7, snow ? ['#c8d0da', '#a8b0ba', '#e8ecf0'] : ['#2e3824', '#3e3726', '#1a2316', '#4a4030']);
-    for (let X = 60; X < 150; X++) { const y = Math.round(196 + (X - 60) * 0.06); R(o, X, y, 1, 4, '#3e2e20'); R(o, X, y, 1, 1, snow ? '#e8ecf0' : '#6a5238'); }
+    BR.bands(o, [[0, '#0b130e'], [160, '#15221a'], [227, '#1b2a1f']]);
+    for (let Y = 0; Y < 233; Y++) for (let X = 0; X < W; X++) { const s = (X + Y * 0.55) % 75; if (s < 12 && BR.BAYER[(Y & 3) * 4 + (X & 3)] < 0.45 * (1 - Math.abs(s - 6) / 6) * (1 - Y / 293)) R(o, X, Y, 1, 1, '#2f4533'); }
+    for (let X = -4; X < W; X += 8) BR.pine(o, X, 200 + ((X * 3) % 10), 80 + ((X * 7) % 24), '#1a2c20');
+    for (let X = 2; X < W; X += 15) BR.pine(o, X, 229 + ((X * 5) % 8), 104 + ((X * 11) % 26), '#132219');
+    BR.bands(o, [[224, snow ? '#8a949e' : '#24301f'], [H, snow ? '#5a646e' : '#161e14']]);
+    BR.grass(o, 227, 1600, 7, snow ? ['#c8d0da', '#a8b0ba', '#e8ecf0'] : ['#2e3824', '#3e3726', '#1a2316', '#4a4030']);
+    for (let X = 80; X < 200; X++) { const y = Math.round(261 + (X - 80) * 0.06); R(o, X, y, 1, 5, '#3e2e20'); R(o, X, y, 1, 1, snow ? '#e8ecf0' : '#6a5238'); }
     bgCache = { look, c };
     return c;
   }
@@ -55,21 +55,21 @@
       g.drawImage(timberBg(BR.ch().look), 0, 0);
       const far = c.present && c.dist <= 150 && c.dist > 95, near = c.present && c.dist <= 95;
       if (far) this.drawAnimal(g, c);
-      BR.pine(g, 172, 186, 150, '#0f1c13');
-      R(g, 171, 170, 3, 18, '#241a12');
+      BR.pine(g, 229, 248, 200, '#0f1c13');
+      R(g, 228, 227, 3, 24, '#241a12');
       if (near) this.drawAnimal(g, c);
-      R(g, 0, 0, 14, H, '#271e15'); R(g, 12, 0, 2, H, '#45362a'); R(g, 0, 0, 3, H, '#1a130d');
-      for (let Y = 4; Y < H; Y += 9) R(g, 4 + (Y % 4), Y, 4, 5, '#1b150f');
-      BR.sprite(g, BR.HUNT, BR.HCOL, 12, 196, 3, false);
-      for (let j = 0; j < 20; j++) R(g, 14, j, 30 - j * 1.5, 1, '#0a110c');
+      R(g, 0, 0, 19, H, '#271e15'); R(g, 16, 0, 3, H, '#45362a'); R(g, 0, 0, 4, H, '#1a130d');
+      for (let Y = 5; Y < H; Y += 12) R(g, 5 + (Y % 5), Y, 5, 7, '#1b150f');
+      BR.sprite(g, BR.HUNT, BR.HCOL, 16, 262, 4, false);
+      for (let j = 0; j < 27; j++) R(g, 19, j, 40 - j * 1.5, 1, '#0a110c');
     },
     drawAnimal(g, c) {
       const rel = BR.clamp(angDiff(c.face, c.rel) / 90, -1, 1);
-      const scale = BR.clamp(40 / Math.max(20, c.dist), 0.3, 1.2) * (c.animal.sp === 'moose' ? 0.8 : 1);
-      const feet = Math.round(172 + (1 - Math.min(c.dist, 160) / 160) * 52);
+      const scale = BR.clamp(53 / Math.max(20, c.dist), 0.4, 1.6) * (c.animal.sp === 'moose' ? 0.8 : 1);
+      const feet = Math.round(229 + (1 - Math.min(c.dist, 160) / 160) * 69);
       const pose = c.steam && c.animal.sex === 'bull' && c.animal.sp === 'elk' ? 'bugle' : 'walk';
       const spr = BR.SPR.get(c.animal, pose, scale, { flip: c.angle ? c.angle !== 'broadside' || rel < 0 : rel < 0 });
-      BR.SPR.draw(g, spr, W * 0.58 + rel * 50, feet);
+      BR.SPR.draw(g, spr, W * 0.58 + rel * 67, feet);
     },
     hud() {
       const S = BR.S, ch = BR.ch(), c = S.enc.call, v = this.voc, has = S.items;
@@ -89,7 +89,7 @@
           ${BR.btn('bugle', v.bugle, '', null, locked)}
           ${BR.btn('rake', v.rake, '', null, locked)}
           ${BR.btn('wait', 'Wait quietly', '', null, locked)}
-          ${c.dist <= 200 && c.present ? BR.btn('move', 'Slip crosswind', '', null, locked) : BR.btn('leave', 'Leave', '')}
+          ${c.dist <= 200 && c.present && !locked ? BR.btn('move', 'Slip crosswind') : BR.btn('leave', 'Leave', locked ? 'go' : '')}
         </div>`);
     },
     act(a) {
@@ -105,7 +105,7 @@
       const calls = ['cow', 'estrus', 'bugle'], recent = c.hist.slice(-3).filter(h => calls.includes(h)).length;
       c.hist.push(action);
       let msg = '';
-      if (S.part === 'evening' && S.clock >= 19.6) return this.end({ kind: 'dark' });
+      if (S.part === 'evening' && S.clock >= BR.dark()) return this.end({ kind: 'dark' });
       if (S.part === 'morning' && S.clock >= 11.5) { c.msg = 'Midday. Everything’s bedded.'; c.dead = true; return this.after(); }
       if (!c.present) {
         msg = action === 'wait' ? 'A squirrel chatters. Nothing else.' : r() < 0.25 ? v.far : 'Nothing answers.';

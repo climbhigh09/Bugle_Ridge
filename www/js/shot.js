@@ -2,7 +2,7 @@
 // and recovery (read the sign, pick the wait, follow blood, walk up and tag). No ID help: what you see in the sight is what you get.
 (function () {
   const BR = window.BR, { P, W, H, R } = BR;
-  const GAP = 6, GROUND = 156;
+  const GAP = 8, GROUND = 208;
   const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
   const ANGLE = { broadside: 'broadside', 'quartering-to': 'quartering to you', 'quartering-away': 'quartering away' };
 
@@ -14,20 +14,20 @@
     const o = c.getContext('2d'); o.imageSmoothingEnabled = false;
     const snow = look === 'snow', breaks = look === 'breaks', ak = look === 'ak';
     if (timber) {
-      BR.bands(o, [[0, '#0b130e'], [110, '#15221a'], [160, '#1b2a1f']]);
-      for (let X = -4; X < W; X += 7) BR.pine(o, X, 150 + ((X * 3) % 8), 60 + ((X * 7) % 20), '#1a2c20');
-      for (let X = 3; X < W; X += 14) BR.pine(o, X, 162 + ((X * 5) % 6), 90 + ((X * 11) % 20), '#132219');
-      BR.bands(o, [[158, snow ? '#8a949e' : '#26321f'], [H, snow ? '#5a646e' : '#141c12']]);
-      BR.grass(o, 159, 1100, 3, snow ? ['#c8d0da', '#a8b0ba'] : ['#2e3824', '#3e3726', '#1a2316', '#4a4030']);
+      BR.bands(o, [[0, '#0b130e'], [147, '#15221a'], [213, '#1b2a1f']]);
+      for (let X = -4; X < W; X += 8) BR.pine(o, X, 200 + ((X * 3) % 10), 80 + ((X * 7) % 26), '#1a2c20');
+      for (let X = 3; X < W; X += 16) BR.pine(o, X, 216 + ((X * 5) % 8), 120 + ((X * 11) % 26), '#132219');
+      BR.bands(o, [[211, snow ? '#8a949e' : '#26321f'], [H, snow ? '#5a646e' : '#141c12']]);
+      BR.grass(o, 212, 2000, 3, snow ? ['#c8d0da', '#a8b0ba'] : ['#2e3824', '#3e3726', '#1a2316', '#4a4030']);
     } else {
-      BR.bands(o, snow ? [[0, '#5a6674'], [60, '#8a94a0'], [90, '#b4bcc6']] : ak ? [[0, '#3a4458'], [60, '#6a7486'], [90, '#9a8a7a']] : [[0, '#2a2946'], [40, P.dawn], [70, '#9a5d52'], [86, P.glow]]);
-      BR.ridge(o, 72, 10, 0.03, 2.4, snow ? '#7e8898' : BR.mix(P.far2, P.dawn, 0.5));
-      BR.ridge(o, 88, 7, 0.04, 0.8, snow ? '#5e6a78' : P.far2);
-      if (!breaks) for (let X = 0; X < W + 4; X += 5) BR.pine(o, X, 152, 26 + ((X * 11) % 16), P.timber);
-      if (look === 'sept') [[22, 140], [30, 143], [138, 139], [147, 142], [156, 140]].forEach(([x, y]) => BR.aspen(o, x, y, 5));
+      BR.bands(o, snow ? [[0, '#5a6674'], [80, '#8a94a0'], [120, '#b4bcc6']] : ak ? [[0, '#3a4458'], [80, '#6a7486'], [120, '#9a8a7a']] : [[0, '#2a2946'], [53, P.dawn], [93, '#9a5d52'], [115, P.glow]]);
+      BR.ridge(o, 96, 13, 0.0225, 2.4, snow ? '#7e8898' : BR.mix(P.far2, P.dawn, 0.5));
+      BR.ridge(o, 117, 9, 0.03, 0.8, snow ? '#5e6a78' : P.far2);
+      if (!breaks) for (let X = 0; X < W + 4; X += 6) BR.pine(o, X, 203, 34 + ((X * 11) % 22), P.timber);
+      if (look === 'sept') [[29, 187], [40, 191], [184, 185], [196, 189], [208, 187]].forEach(([x, y]) => BR.aspen(o, x, y, 6));
       const g0 = snow ? '#c4ccd6' : breaks ? '#8a8058' : ak ? '#6a6a3e' : '#56673f', g1 = snow ? '#9aa4b0' : breaks ? '#6e6a4a' : ak ? '#4e5236' : '#34422c';
-      BR.bands(o, [[150, g0], [H, g1]]);
-      BR.grass(o, 151, 1400, 21, snow ? ['#e8ecf0', '#b4bcc8', '#d8dee6'] : breaks ? ['#a09468', '#7e7652', '#b0a478'] : [P.meadow2, P.meadowD, P.meadow3, '#7a7a4e']);
+      BR.bands(o, [[200, g0], [H, g1]]);
+      BR.grass(o, 201, 2600, 21, snow ? ['#e8ecf0', '#b4bcc8', '#d8dee6'] : breaks ? ['#a09468', '#7e7652', '#b0a478'] : [P.meadow2, P.meadowD, P.meadow3, '#7a7a4e']);
     }
     return (bgCache[key] = c);
   }
@@ -36,29 +36,29 @@
     if (mask) return mask;
     mask = document.createElement('canvas'); mask.width = W * 2; mask.height = H * 2;
     const o = mask.getContext('2d');
-    for (let Y = 0; Y < H * 2; Y++) for (let X = (Y & 1); X < W * 2; X += 2) if (Math.hypot(X - W, Y - H) > 34) R(o, X, Y, 1, 1, P.ink);
+    for (let Y = 0; Y < H * 2; Y++) for (let X = (Y & 1); X < W * 2; X += 2) if (Math.hypot(X - W, Y - H) > 45) R(o, X, Y, 1, 1, P.ink);
     return mask;
   }
   let scopeMask = null;
   function drawSight(g, hx, hy, pins, mid, k, swx) {
     g.drawImage(peepMask(), hx - W, hy - H);
-    BR.ring(g, hx, hy, 16, P.ink, 3); BR.ring(g, hx, hy, 17, P.ink, 3);
-    pins.forEach(pin => { const py = Math.round(hy + (pin - mid) / 10 * GAP * k); R(g, hx - 15, py, 14, 1, P.ink); R(g, hx - 1, py, 2, 2, BR.PIN_COLS[pin]); });
-    R(g, hx - 5, hy + 12, 11, 3, P.ink); R(g, hx - 4, hy + 13, 9, 1, '#2f4a33'); R(g, hx + Math.round(swx), hy + 13, 2, 1, P.bone);
+    BR.ring(g, hx, hy, 21, P.ink, 2); BR.ring(g, hx, hy, 22, P.ink, 2);
+    pins.forEach(pin => { const py = Math.round(hy + (pin - mid) / 10 * GAP * k); R(g, hx - 20, py, 19, 1, P.ink); R(g, hx - 1, py, 3, 2, BR.PIN_COLS[pin]); });
+    R(g, hx - 7, hy + 16, 15, 4, P.ink); R(g, hx - 6, hy + 17, 13, 2, '#2f4a33'); R(g, hx + Math.round(swx), hy + 17, 2, 2, P.bone);
   }
   function drawScope(g, hx, hy, marks) {
     if (!scopeMask) {
       scopeMask = document.createElement('canvas'); scopeMask.width = W * 2; scopeMask.height = H * 2;
       const o = scopeMask.getContext('2d'); o.fillStyle = '#050608';
-      for (let Y = 0; Y < H * 2; Y++) for (let X = 0; X < W * 2; X++) if (Math.hypot(X - W, Y - H) > 70) o.fillRect(X, Y, 1, 1);
+      for (let Y = 0; Y < H * 2; Y++) for (let X = 0; X < W * 2; X++) if (Math.hypot(X - W, Y - H) > 93) o.fillRect(X, Y, 1, 1);
     }
     g.drawImage(scopeMask, hx - W, hy - H);
-    BR.ring(g, hx, hy, 70, '#050608', 1);
-    R(g, hx - 70, hy - 1, 52, 3, '#050608'); R(g, hx + 18, hy - 1, 52, 3, '#050608'); R(g, hx - 1, hy - 70, 3, 52, '#050608'); R(g, hx - 1, hy + 18, 3, 52, '#050608');
-    R(g, hx - 18, hy, 36, 1, '#050608'); R(g, hx, hy - 18, 1, 36, '#050608');
-    marks.forEach((m, i) => { const y = Math.round(hy + m); if (m > 1 && m < 18) R(g, hx - 3 + i, y, 7 - i * 2, 1, '#050608'); else if (m >= 18) R(g, hx - 1, y, 3, 1, '#050608'); });
+    BR.ring(g, hx, hy, 93, '#050608', 1);
+    R(g, hx - 93, hy - 1, 69, 3, '#050608'); R(g, hx + 24, hy - 1, 69, 3, '#050608'); R(g, hx - 1, hy - 93, 3, 69, '#050608'); R(g, hx - 1, hy + 24, 3, 69, '#050608');
+    R(g, hx - 24, hy, 48, 1, '#050608'); R(g, hx, hy - 24, 1, 48, '#050608');
+    marks.forEach((m, i) => { const y = Math.round(hy + m); if (m > 1 && m < 24) R(g, hx - 4 + i, y, 9 - i * 2, 1, '#050608'); else if (m >= 24) R(g, hx - 1, y, 3, 1, '#050608'); });
   }
-  BR.archery = { GAP, gauss, meadowBg, peepMask, drawSight };
+  BR.archery = { GAP, gauss, meadowBg, peepMask, drawSight, drawScope };
 
   BR.scenes.shot = {
     enter() {
@@ -73,17 +73,24 @@
       if (this.rifle) {
         this.rf = BR.rifle();
         this.zoom = BR.clamp(this.range / 45, 1, BR.zoomMax());
-        this.scale = BR.clamp(40 / (this.range / this.zoom), 0.2, 1.5) * spScale;
+        this.scale = BR.clamp(48 / (this.range / this.zoom), 0.27, 1.35) * spScale;
       } else {
         this.bow = BR.bow(); this.pins = this.bow.pins; this.mid = this.pins[(this.pins.length - 1) >> 1]; this.k = this.bow.fps > 255 ? 0.85 : 1;
-        this.scale = BR.clamp(40 / this.range, 0.25, 1.5) * spScale;
+        this.scale = BR.clamp(40 / this.range, 0.3, 1.35) * spScale;
       }
       this.flip = Math.random() < 0.5;
       this.spr = BR.SPR.get(this.animal, sh.from === 'glass' && Math.random() < 0.4 ? 'feed' : 'stand', this.scale, { flip: this.flip });
       this.pos = { dx: Math.round(W / 2 + 6 - (this.spr.x0 + this.spr.x1) / 2), dy: GROUND - this.spr.gy };
       const z = BR.SPR.vitals(this.animal.sp), fs = this.flip ? -1 : 1;
       this.vit = { x: this.pos.dx + this.spr.cx + z.vit[0] * this.spr.px * fs, y: this.pos.dy + this.spr.gy + z.vit[1] * this.spr.px };
-      this.aim = { x: W / 2 + (Math.random() - 0.5) * 30, y: this.vit.y - 18 + Math.random() * 10 };
+      this.aim = { x: W / 2 + (Math.random() - 0.5) * 40, y: this.vit.y - 24 + Math.random() * 13 };
+      // a branch in the shooting lane: visible, and it will eat an arrow (a bullet only if it's thick)
+      const area = BR.area(S.enc.area), brushy = area && area.mix.timber + area.mix.deadfall > 0.3;
+      this.branch = null;
+      if (sh.from !== 'glass' && brushy && Math.random() < (this.rifle ? 0.25 : 0.35)) {
+        const y0 = this.vit.y - 30 + Math.random() * 40;
+        this.branch = { x0: -4, y0, x1: W + 4, y1: y0 + (Math.random() - 0.5) * 70, w: this.rifle ? 3 : 2 };
+      }
       if (opt.est == null) opt.est = S.items.rangefinder ? this.range : Math.round(this.range * (1 + (Math.random() - 0.5) * 0.3) / 5) * 5;
       if (opt.wind == null) { const c = BR.conditions(); opt.wind = Math.round(c.mph * (0.4 + Math.random() * 0.6)) * (Math.random() < 0.5 ? -1 : 1); }
       this.phase = 'ready'; this.t = 0; this.holdT = 0; this.last = null; this.impact = null;
@@ -101,7 +108,7 @@
       if (this.phase !== 'full') return { x: 0, y: 0 };
       const S = BR.S, f = this.fatigue(), t = this.holdT;
       let base, buck = BR.clamp(1 - this.holdT / 3, 0, 1) * (this.animal.sex === 'bull' ? 1.2 : 0.6) + (BR.S.enc.shot.alert || 0) / 120;
-      if (this.rifle) base = S.items.tripod ? 0.3 : S.items.sticks ? 0.6 : 1.1;
+      if (this.rifle) base = S.items.tripod ? 0.3 : BR.S.enc.shot.from === 'glass' ? 0.55 : S.items.sticks ? 0.6 : 1.1;
       else base = Math.max(0.3, 0.7 - S.strength * 0.12);
       let amp = base + f * f * 3.5 + buck;
       if (this.guide) amp *= Math.max(1.05, 1.7 - 0.2 * S.guideSkill);
@@ -169,12 +176,16 @@
         this.pins.forEach(pin => { const d = Math.abs(hy + (pin - this.mid) / 10 * GAP * this.k - this.vit.y); if (d < bd) { bd = d; held = pin; } });
       }
       const sxp = ix - this.pos.dx, syp = iy - this.pos.dy, onBody = this.spr.body(sxp, syp), [wx, wy] = this.spr.world(sxp, syp);
-      const zone = BR.SPR.zone(this.animal.sp, wx, wy, this.angle, onBody);
+      let zone = BR.SPR.zone(this.animal.sp, wx, wy, this.angle, onBody), deflected = false;
+      if (this.branch) {
+        const b = this.branch, t = (ix - b.x0) / (b.x1 - b.x0), by = b.y0 + (b.y1 - b.y0) * t;
+        if (Math.abs(iy - by) <= b.w && (!this.rifle || Math.random() < 0.5)) { deflected = true; zone = Math.random() < 0.6 ? 'miss' : ['ham', 'paunch', 'leg', 'neck'][(Math.random() * 4) | 0]; }
+      }
       S.stats.shots++;
       e.shotResult = {
         animal: this.animal, sp: this.animal.sp, zone, range: this.range, est: opt.est, weapon: this.rifle ? 'rifle' : 'bow', held, ke,
         fatigue: +this.fatigue().toFixed(2), angle: this.angle, from: sh.from, high: iy < this.vit.y, wind: opt.wind,
-        windHeld: Math.round((this.vit.x - hx) / px), gr: this.bow ? this.bow.gr : 0, blades: !!S.items.fixedBlades, guide: this.guide
+        windHeld: Math.round((this.vit.x - hx) / px), gr: this.bow ? this.bow.gr : 0, blades: !!S.items.fixedBlades, guide: this.guide, deflected, clock: +S.clock.toFixed(3)
       };
       this.impact = { x: ix, y: iy, seen: !this.rifle || S.items.suppressor || this.rf.recoil < 22 };
       this.phase = 'flight'; this.t = 0;
@@ -183,7 +194,7 @@
     resolve() {
       const r = BR.S.enc.shotResult;
       this.phase = 'done';
-      if (r.zone === 'miss') { BR.log('miss', r); BR.go('outcome', { kind: 'miss', high: r.high, range: r.range, weapon: r.weapon }); }
+      if (r.zone === 'miss') { BR.log('miss', r); BR.go('outcome', { kind: 'miss', high: r.high, range: r.range, weapon: r.weapon, deflected: r.deflected }); }
       else BR.go('recover');
     },
     finish(o) {
@@ -195,18 +206,19 @@
     draw(g) {
       g.drawImage(meadowBg(BR.S.enc.shot.from === 'call', BR.ch().look), 0, 0);
       const ran = this.phase === 'flight' && this.t > 0.25 && this.impact;
-      g.drawImage(this.spr.canvas, this.pos.dx + (ran ? (this.flip ? -1 : 1) * this.t * 40 : 0), this.pos.dy);
+      g.drawImage(this.spr.canvas, this.pos.dx + (ran ? (this.flip ? -1 : 1) * this.t * 53 : 0), this.pos.dy);
+      if (this.branch) { const b = this.branch; for (let x = b.x0; x <= b.x1; x++) { const y = b.y0 + (b.y1 - b.y0) * (x - b.x0) / (b.x1 - b.x0); R(g, x, y - 1, 1, b.w + 1, '#2a2016'); R(g, x, y - 1, 1, 1, '#5a4a36'); if (x % 9 === 0) { R(g, x, y - 4, 1, 3, '#2a2016'); R(g, x + 1, y - 5, 2, 2, BR.ch().look === 'sept' ? '#c99a3e' : '#3a4a2e'); } } }
       if (this.phase === 'flight') {
         if (this.t < 0.35 && this.impact.seen) { R(g, this.impact.x - 1, this.impact.y - 1, 3, 3, P.bone); R(g, this.impact.x, this.impact.y, 1, 1, P.blood); }
         if (this.rifle && !this.impact.seen) R(g, 0, 0, W, H, 'rgba(12,12,14,.55)');
         return;
       }
       if (this.phase === 'ready') {
-        if (this.rifle) { R(g, W / 2 - 18, H - 24, 36, 24, '#2a2a2a'); R(g, W / 2 - 6, H - 30, 12, 8, '#1a1a1a'); }
-        else R(g, W / 2 - 1, H - 40, 2, 40, '#3b2a1c');
+        if (this.rifle) { R(g, W / 2 - 24, H - 32, 48, 32, '#2a2a2a'); R(g, W / 2 - 8, H - 40, 16, 10, '#1a1a1a'); }
+        else R(g, W / 2 - 1, H - 53, 3, 53, '#3b2a1c');
         return;
       }
-      const sw = this.sway(), rise = this.phase === 'drawing' ? (1 - this.t / this.drawTime) * 90 : 0;
+      const sw = this.sway(), rise = this.phase === 'drawing' ? (1 - this.t / this.drawTime) * 120 : 0;
       const hx = Math.round(this.aim.x + sw.x), hy = Math.round(this.aim.y + sw.y + rise);
       if (this.rifle) drawScope(g, hx, hy, this.marks());
       else drawSight(g, hx, hy, this.pins, this.mid, this.k, sw.x);
@@ -294,7 +306,7 @@
       const o = c.getContext('2d'), snow = look === 'snow';
       R(o, 0, 0, W, H, snow ? '#c4ccd6' : look === 'breaks' ? '#7e7652' : P.meadow);
       BR.grass(o, 0, 2600, seed, snow ? ['#e8ecf0', '#b4bcc8', '#d8dee6'] : [P.meadow2, P.meadowD, P.meadow3, '#394530']);
-      for (let X = -3; X < W + 4; X += 7) BR.pine(o, X, 22 + ((X * 7) % 6), 22 + ((X * 3) % 8), P.timber, P.tree);
+      for (let X = -3; X < W + 4; X += 8) BR.pine(o, X, 29 + ((X * 7) % 8), 29 + ((X * 3) % 10), P.timber, P.tree);
       if (Object.keys(groundCache).length > 6) for (const k in groundCache) delete groundCache[k];
       return (groundCache[key] = c);
     },
@@ -303,8 +315,8 @@
       if (!e.shotResult) { BR.endHunt(); return; }
       if (!e.rec) {
         const m = model(e.shotResult), seed = (Math.random() * 1e6) | 0, r = BR.rng(seed), pts = [];
-        let x = 90, y = 228;
-        for (let i = 0; i < m.trail; i++) { pts.push({ x: Math.round(x), y: Math.round(y) }); x = BR.clamp(x + (r() - 0.5) * 40, 16, W - 16); y -= 200 / m.trail; }
+        let x = 120, y = 304;
+        for (let i = 0; i < m.trail; i++) { pts.push({ x: Math.round(x), y: Math.round(y) }); x = BR.clamp(x + (r() - 0.5) * 53, 21, W - 21); y -= 266 / m.trail; }
         e.rec = { m, lethal: Math.random() < m.lethal, phase: 'sign', waited: 0, found: 0, pts, seed, stop: m.trail };
       }
       this.bg = this.groundCanvas(e.rec.seed);
@@ -326,8 +338,8 @@
       g.drawImage(this.bg, 0, 0);
       if (rec.phase === 'sign') {
         const col = { vitals: '#e0707a', heart: P.blood, liver: '#6a2a28', paunch: '#6b6a3a' }[res.zone] || P.blood;
-        if (res.weapon === 'bow') { R(g, 70, 150, 40, 1, '#d8cfb8'); R(g, 108, 149, 3, 3, P.amber); R(g, 72, 150, 14, 1, col); R(g, 74, 151, 6, 1, col); }
-        else { for (let i = 0; i < 7; i++) R(g, 84 + (i * 5) % 13, 150 + (i * 3) % 7, 2, 1, col); }
+        if (res.weapon === 'bow') { R(g, 93, 200, 53, 1, '#d8cfb8'); R(g, 144, 199, 4, 3, P.amber); R(g, 96, 200, 19, 1, col); R(g, 99, 201, 8, 1, col); }
+        else { for (let i = 0; i < 9; i++) R(g, 112 + (i * 5) % 17, 200 + (i * 3) % 9, 2, 1, col); }
         return;
       }
       for (let i = 0; i < Math.min(rec.found, rec.pts.length); i++) { const p = rec.pts[i]; R(g, p.x, p.y, 2, 1, P.blood); R(g, p.x + 3, p.y + 2, 1, 1, P.blood); }
@@ -337,13 +349,13 @@
         else if (this.pulseOn) { R(g, nxt.x - 3, nxt.y - 3, 7, 7, '#3a1614'); R(g, nxt.x - 2, nxt.y - 2, 5, 5, '#7a2622'); R(g, nxt.x - 1, nxt.y - 1, 3, 3, '#e0504a'); }
         else R(g, nxt.x - 1, nxt.y - 1, 2, 2, P.blood);
       }
-      if (rec.phase === 'found') { const p = rec.pts[rec.pts.length - 1], a = res.animal; BR.SPR.draw(g, BR.SPR.get(a, 'dead', a.sp === 'moose' ? 0.5 : a.sp === 'wolf' ? 0.9 : 0.6), p.x, p.y + 4); }
+      if (rec.phase === 'found') { const p = rec.pts[rec.pts.length - 1], a = res.animal; BR.SPR.draw(g, BR.SPR.get(a, 'dead', a.sp === 'moose' ? 0.65 : a.sp === 'wolf' ? 1.2 : 0.8), p.x, p.y + 5); }
     },
     up(p) {
       const S = BR.S, rec = S.enc.rec;
       if (rec.phase !== 'track') return;
       const nxt = rec.pts[rec.found];
-      if (nxt && Math.hypot(p.x - nxt.x, p.y - nxt.y) < 12) {
+      if (nxt && Math.hypot(p.x - nxt.x, p.y - nxt.y) < 16) {
         rec.found++; BR.vibe(10);
         clearInterval(this.pulseTimer); this.pulseTimer = null;
         if (rec.found >= rec.pts.length) { rec.phase = 'found'; BR.vibe(80); }
@@ -394,7 +406,7 @@
         else return this.lose();
       } else if (a === 'lost') return this.lose();
       else if (a === 'tag') {
-        const reason = BR.legal(res.animal);
+        const reason = BR.legal(res.animal, res.clock);
         BR.log('recovered', Object.assign({ waited: rec.waited, pushed: rec.pushed }, res));
         if (reason) {
           S.verdict = { illegal: true, reason }; S.over = true; S.stats.violations++;
@@ -415,7 +427,7 @@
     },
     back() {
       const rec = BR.S.enc.rec;
-      if (rec.phase === 'found') return;
+      if (rec.phase === 'found') { this.act('tag'); return; }
       BR.confirm('Give up on it?', 'Mark the spot and head back. You’ll spend tomorrow looking.', 'Give up', () => this.lose());
     }
   };

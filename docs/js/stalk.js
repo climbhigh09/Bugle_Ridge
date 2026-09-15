@@ -1,7 +1,7 @@
 // Bugle Ridge — stalk planning on a topo map, then the real-time creep. Uphill is always the top of the map. 1 px = 3 yd.
 (function () {
   const BR = window.BR, { P, W, H, R } = BR;
-  const CELL = 6, CW = 30, CH = 40, YD = 3, START = { x: 90, y: 228 };
+  const CELL = 6, CW = 40, CH = 54, YD = 3, START = { x: 120, y: 304 };
   const OPEN = 0, TIMBER = 1, DEAD = 2, SHALE = 3;
   const TER = [
     { name: 'open', speed: 1.0, noise: 0.15, sight: 100, cover: 0 },
@@ -9,8 +9,11 @@
     { name: 'deadfall', speed: 0.5, noise: 1.0, sight: 50, cover: 0.6 },
     { name: 'shale', speed: 0.7, noise: 1.3, sight: 100, cover: 0 }
   ];
-  const SPEED = 4;      // px per real second on open ground; 1 real second = 1 in-game minute
-  const HIKE = 3;       // speed multiplier when far out and unseen
+  // Pace in px per real second (1 px = 3 yd, 1 real second = 1 in-game minute), before terrain:
+  // hike 60 yd/min when more than 150 yd out and unseen · sneak 24 yd/min · creep 10 yd/min inside 60 yd.
+  const PACE = { hike: 20, sneak: 8, creep: 3.5 };
+  const paceFor = (dist, ter) => (dist > 50 && (ter.cover >= 0.5 || dist > ter.sight) ? 'hike' : dist > 20 ? 'sneak' : 'creep');
+  BR.stalkPace = paceFor;
   BR.maxShot = () => (BR.ch().weapon === 'bow' ? 80 : 600);
 
   function quantile(arr, q) { const s = arr.slice().sort((a, b) => a - b); return s[BR.clamp(Math.floor(q * s.length), 0, s.length - 1)]; }
@@ -110,8 +113,8 @@
       const a = pts[s], b = pts[s + 1], L = Math.hypot(b.x - a.x, b.y - a.y), n = Math.max(1, Math.ceil(L / 2)), step = L / n;
       for (let k = 0; k < n; k++) {
         const x = a.x + (b.x - a.x) * k / n, y = a.y + (b.y - a.y) * k / n, ter = TER[terrainAt(grid, x, y)];
-        const far = Math.hypot(ec.x - x, ec.y - y) > 50;
-        total += step; if (ter.cover < 0.5) open += step; noise += ter.noise * step; minutes += step / (SPEED * ter.speed * (far && ter.cover >= 0.5 ? HIKE : 1));
+        const pace = PACE[paceFor(Math.hypot(ec.x - x, ec.y - y), ter)];
+        total += step; if (ter.cover < 0.5) open += step; noise += ter.noise * step; minutes += step / (pace * ter.speed);
         if (scentAt < 0) {
           const sc = BR.scent(area, startClock + minutes / 60), dx = ec.x - x, dy = ec.y - y, d = Math.hypot(dx, dy);
           if (d > 0 && d < 83 && (sc.x * dx + sc.y * dy) / d > 0.72) scentAt = s + 1;
@@ -128,7 +131,7 @@
       const S = BR.S, e = S.enc;
       this.area = BR.area(e.area);
       if (!e.map) {
-        const ex = BR.clamp(e.target.x, 30, 150), ey = BR.clamp(228 - e.target.dist / YD, 16, 150), seed = (e.seed || 1) + 911, r = BR.rng(seed);
+        const ex = BR.clamp(e.target.x, 30, 210), ey = BR.clamp(START.y - e.target.dist / YD, 16, 200), seed = (e.seed || 1) + 911, r = BR.rng(seed);
         e.map = { seed, ex, ey };
         e.elk = e.target.animals.map(k => ({ x: ex + (r() - 0.5) * 22, y: ey + (r() - 0.5) * 12, a: k.a, hideAt: k.hideAt, dx: r() < 0.5 ? 1 : -1, up: false }));
         let lead = e.elk.findIndex(k => k.a.sex === 'cow'); if (lead < 0) lead = 0;
@@ -189,7 +192,7 @@
       this.area = BR.area(e.area);
       this.m = mapFor(e);
       if (!e.st) e.st = { hx: START.x, hy: START.y, seg: 0, alert: 0, scent: 0, look: false, lookT: 3, moveA: 0, noiseA: 0, warned: false };
-      this.holding = false; this.done = false; this.flashT = 0; this.flashMsg = ''; this.hudT = 0; this.saveT = 5; this.idle = 0; this.hiking = false;
+      this.holding = false; this.done = false; this.flashT = 0; this.flashMsg = ''; this.hudT = 0; this.saveT = 5; this.idle = 0; this.pace = 'sneak';
       this.paused = !!a.resume;
       this.hud();
       if (!this.paused) BR.animate();
@@ -216,12 +219,12 @@
       } else this.idle = 0;
       BR.pass(dt);
       const clock = S.clock;
-      if (S.part === 'evening' && clock >= 19.6) return this.end({ kind: 'dark' });
+      if (S.part === 'evening' && clock >= BR.dark()) return this.end({ kind: 'dark' });
       const route = [START].concat(e.route), here = TER[terrainAt(this.m.grid, st.hx, st.hy)];
       const live = e.elk.filter(k => !k.gone);
-      const lead0 = live.find(k => k.lead) || live[0];
-      const ld0 = lead0 ? Math.hypot(lead0.x - st.hx, lead0.y - st.hy) : 999;
-      this.hiking = ld0 > 50 && (here.cover >= 0.5 || ld0 > here.sight);
+      const n0 = this.nearest();
+      this.pace = paceFor(n0 ? n0.px : 999, here);
+      const pf = PACE[this.pace] / PACE.sneak;
       let moving = false;
       if (this.holding) {
         let target = null;
@@ -229,7 +232,7 @@
         else { const n = this.nearest(); if (n && n.px > 10) target = n.k; }
         if (target) {
           const dx = target.x - st.hx, dy = target.y - st.hy, L = Math.hypot(dx, dy);
-          const step = SPEED * here.speed * dt * (st.seg < route.length - 1 ? 1 : 0.6) * (this.hiking ? HIKE : 1);
+          const step = PACE[this.pace] * here.speed * dt;
           if (L <= step) { st.hx = target.x; st.hy = target.y; if (st.seg < route.length - 1) st.seg++; }
           else { st.hx += dx / L * step; st.hy += dy / L * step; }
           moving = true;
@@ -252,11 +255,11 @@
       }
       if (st.look && ld < here.sight) {
         const close = 1 - ld / here.sight;
-        if (moving) { const add = (30 + 50 * close) * dt; st.alert += add; st.moveA += add; }
+        if (moving) { const add = (30 + 50 * close) * dt * pf; st.alert += add; st.moveA += add; }
         else if (here.cover < 0.5 && close > 0.5) st.alert += 4 * dt;
         else st.alert -= 3 * dt;
       } else st.alert -= 6 * dt;
-      if (moving && ld < 100 && Math.random() < here.noise * 0.28 * dt * (this.hiking ? 1.5 : 1)) {
+      if (moving && ld < 100 && Math.random() < here.noise * 0.28 * dt * pf) {
         const add = ld < 40 ? 30 : ld < 70 ? 18 : 8;
         st.alert += add; st.noiseA += add;
         this.flash(here.name === 'deadfall' ? 'Stick snapped!' : here.name === 'shale' ? 'Rocks clattered!' : 'Brush scraped your pack.');
@@ -267,6 +270,7 @@
         if (st.scent > 0.25 && !st.warned) { st.warned = true; this.flash('A nose is up. The wind’s wrong.'); BR.vibe(30); }
       } else st.scent = Math.max(0, st.scent - dt * 0.2);
       st.alert = BR.clamp(st.alert, 0, 100);
+      if (ch.pressure && moving && Math.random() < ch.pressure(S.day) * dt * 0.0015) return this.end({ kind: 'bumped' });
       if (ch.bears && moving && here.cover >= 0.5 && Math.random() < dt * 0.0012 * (this.area.bear ? 2 : 1)) return this.end({ kind: 'charge', where: 'timber' });
       if (st.scent >= 1) return this.end({ kind: 'bust', cause: 'scent', thermal: sc.thermal, from: sc.from, yd: Math.round(ld * YD), sun: this.area.sun });
       if (st.alert >= 100) return this.end({ kind: 'bust', cause: st.noiseA > st.moveA ? 'noise' : 'movement', yd: Math.round(ld * YD), terrain: here.name });
@@ -323,7 +327,7 @@
       const S = BR.S, e = S.enc, st = e.st, n = this.nearest(); if (!n) return;
       const $ = id => document.getElementById(id);
       if (!$('st-yd')) return;
-      $('st-mode').textContent = this.hiking && this.holding ? 'HIKING' : 'STALKING';
+      $('st-mode').textContent = this.holding ? { hike: 'HIKING', sneak: 'SNEAKING', creep: 'CREEPING' }[this.pace] : 'STALKING';
       $('st-yd').textContent = n.yd + ' yd';
       $('st-meter').innerHTML = BR.meter(Math.ceil(st.alert / 20), 5, st.alert > 60 ? 'bad' : st.alert > 25 ? 'warn' : '');
       $('st-clock').textContent = BR.fmt(S.clock);

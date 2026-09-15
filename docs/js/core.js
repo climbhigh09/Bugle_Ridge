@@ -2,9 +2,9 @@
 (function () {
   'use strict';
   const BR = (window.BR = {});
-  BR.VERSION = '1.0.0';
+  BR.VERSION = '1.1.0';
   window.addEventListener('error', e => console.error('JS error: ' + e.message + ' @' + e.filename + ':' + e.lineno));
-  const W = (BR.W = 180), H = (BR.H = 240);
+  const W = (BR.W = 240), H = (BR.H = 320);
 
   const P = (BR.P = {
     night: '#0c0f17', dusk: '#1a2031', dawn: '#39334f', glow: '#b8694a', amber: '#e3a646',
@@ -262,13 +262,24 @@
     BR.S = {
       v: 3, seed: (Date.now() % 1000003) | 0, year: 1, chapter: 0, day: 1, days: 7, clock: 5.5, part: 'morning',
       cash: 250, bow: 'scout', rifle: null, items: {}, strength: 0, tag: null, tags: { wolf: false, grizzly: false, grizApplied: false },
-      camp: null, drank: false, skipDays: 0, guideSkill: 0, over: false, verdict: null, finished: false, range: null,
+      camp: null, drank: false, water: null, skipDays: 0, rifleRange: null, samSeen: {}, lastVersion: null, lastLessonQ: null, guideSkill: 0, over: false, verdict: null, finished: false, range: null,
       stats: { busts: 0, shots: 0, wounds: 0, spotted: 0, jobs: 0, seasons: 0, filled: 0, violations: 0, predators: 0 },
       history: [], events: [], lesson: null, lessonDay: 0, suggest: null, enc: null, ridge: false, scene: 'title', sceneArgs: null
     };
   };
   BR.save = () => { try { localStorage.setItem(KEY, JSON.stringify(BR.S)); } catch (_) {} };
-  BR.load = () => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 3) { BR.S = s; return true; } } catch (_) {} return false; };
+  BR.load = () => {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY));
+      if (s && s.v === 3) {
+        BR.newGame();
+        BR.S = Object.assign(BR.S, s);  // older 1.x saves pick up any new fields with defaults
+        BR.S.samSeen = BR.S.samSeen || {};
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  };
   BR.wipe = () => { try { localStorage.removeItem(KEY); } catch (_) {} };
   BR.pass = min => { BR.S.clock += min / 60; };
   BR.log = (type, data) => { BR.S.events.push(Object.assign({ type, day: BR.S.day, clock: BR.S.clock }, data || {})); };
@@ -306,14 +317,14 @@
     if (h) h(b.dataset.arg);
   });
 
-  const LEAVE_OK = ['camp', 'debrief', 'title', 'season', 'intro', 'sam', 'campsite'];
+  const LEAVE_OK = ['camp', 'debrief', 'title', 'season', 'intro', 'sam', 'campsite', 'bridge', 'finale'];
   BR.openMenu = () => {
-    const S = BR.S, here = S.scene, ok = LEAVE_OK.includes(here), why = 'Finish or leave this hunt first', bowCh = BR.ch().weapon === 'bow';
+    const S = BR.S, here = S.scene, ok = LEAVE_OK.includes(here), why = 'Finish or leave this hunt first', rifleCh = BR.ch().weapon === 'rifle';
     BR.showOverlay(`
       <div class="row"><span class="t hi">MENU</span><span class="dim">Day ${S.day}/${S.days} · ${BR.fmt(S.clock)} · $${S.cash}</span></div>
       <div class="list">
         ${BR.btn('resume', 'Resume', 'go')}
-        ${bowCh ? BR.btn('range', 'Practice range', '', null, !ok, ok ? 'Learn your pins. No time passes.' : why) : ''}
+        ${BR.btn('range', rifleCh ? 'Rifle range' : 'Practice range', '', null, !ok, ok ? (rifleCh ? 'Learn your holds. No time passes.' : 'Learn your pins. No time passes.') : why)}
         ${BR.btn('shop', 'Gear & shop', '', null, !ok, ok ? `$${S.cash} to spend` : why)}
         ${BR.btn('help', 'How to play')}
         ${BR.btn('ridge', 'Ridge mode: ' + (S.ridge ? 'ON' : 'off'), '', null, false, 'Dims the screen so your face doesn’t glow on the hill')}

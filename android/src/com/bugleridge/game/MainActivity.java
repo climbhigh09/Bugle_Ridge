@@ -18,11 +18,21 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
-/** Thin offline wrapper: the whole game lives in assets/www. */
+/**
+ * Thin wrapper. The game loads from GitHub Pages, so a push to the repo updates the app on its next launch with signal.
+ * The page's service worker keeps a copy for offline use; if there's no network and no copy yet, the bundled
+ * assets/www build runs instead.
+ */
 public class MainActivity extends Activity {
+    static final String LIVE = "https://climbhigh09.github.io/Bugle_Ridge/";
+    static final String BUNDLED = "file:///android_asset/www/index.html";
     private WebView web;
+    private boolean fellBack = false;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -45,7 +55,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setAllowFileAccess(true);
-        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        s.setCacheMode(WebSettings.LOAD_DEFAULT);
         web.addJavascriptInterface(new Bridge(), "Android");
         web.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -54,9 +64,20 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
+                String u = req.getUrl().toString();
+                return !(u.startsWith(LIVE) || u.startsWith("file:///android_asset/"));  // stay inside the game
+            }
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest req, WebResourceError err) {
+                if (req.isForMainFrame() && !fellBack) { fellBack = true; view.loadUrl(BUNDLED); }
+            }
+        });
         setContentView(web);
         hideBars();
-        web.loadUrl("file:///android_asset/www/index.html");
+        web.loadUrl(LIVE);
     }
 
     private void hideBars() {
@@ -113,6 +134,9 @@ public class MainActivity extends Activity {
     }
 
     class Bridge {
+        @JavascriptInterface
+        public String shell() { return "android-1.1.0"; }
+
         @JavascriptInterface
         public void vibrate(int ms) {
             Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);

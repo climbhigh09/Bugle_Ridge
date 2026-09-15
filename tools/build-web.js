@@ -7,7 +7,7 @@ const fs = require('fs'), path = require('path'), zlib = require('zlib'), { exec
 
 const ROOT = path.resolve(__dirname, '..'), WWW = path.join(ROOT, 'www'), DIST = path.join(ROOT, 'dist'), WEB = path.join(DIST, 'web');
 const SCRIPTS = ['core', 'data', 'sprites', 'animals', 'season', 'camp', 'glass', 'stalk', 'call', 'shot', 'range', 'debrief'].map(n => `js/${n}.js`);
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const BUILD = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
 
 // ---------- icons: rasterise android/res/drawable/icon.xml (24×24 pixel art) to PNG ----------
@@ -119,7 +119,8 @@ fs.writeFileSync(path.join(WEB, 'manifest.webmanifest'), JSON.stringify({
   ]
 }, null, 2));
 
-// Cache-first service worker: after one visit the game runs with no signal. A new build bumps the cache name.
+// Service worker: network-first (2.5 s timeout) so a push to GitHub shows up on the next launch with signal,
+// cache fallback so the game still runs on a hill with no bars. Every fetched file refreshes the cache.
 const CACHED = ['./', 'index.html', 'style.css', 'manifest.webmanifest', ...Object.keys(ICONS), ...SCRIPTS];
 fs.writeFileSync(path.join(WEB, 'sw.js'), `// Bugle Ridge ${VERSION} (${BUILD})
 const CACHE = 'bugle-ridge-${BUILD}';
@@ -129,8 +130,18 @@ self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request, { ignoreSearch: true }).then(hit => hit || fetch(e.request)));
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin || e.request.url.endsWith('.apk')) return;
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const net = fetch(e.request, { cache: 'no-cache' }).then(r => { if (r.ok) cache.put(e.request, r.clone()); return r; });
+    const timeout = new Promise(res => setTimeout(() => res(null), 2500));
+    try {
+      const r = await Promise.race([net, timeout]);
+      if (r) return r;
+    } catch (_) {}
+    const hit = await caches.match(e.request, { ignoreSearch: true });
+    return hit || net;
+  })());
 });
 `);
 

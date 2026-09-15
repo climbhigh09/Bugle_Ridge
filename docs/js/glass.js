@@ -2,52 +2,52 @@
 // Nothing identifies the animal for you: the loupe shows antlers, the scope shows points.
 (function () {
   const BR = window.BR, { P, W, H, R } = BR;
-  const PW = 540, LOUPE = 34, MAG = 3, FENCE = 300;
+  const PW = 720, LOUPE = 45, MAG = 3, FENCE = 400;
 
   function buildPano(area, seed, part, look, zone) {
     const c = document.createElement('canvas'); c.width = PW; c.height = H;
     const o = c.getContext('2d'); o.imageSmoothingEnabled = false;
     const snow = look === 'snow';
-    if (part === 'evening') BR.bands(o, [[0, '#231f38'], [30, '#43304a'], [52, '#6e4446'], [64, P.glow]], PW, H);
-    else if (snow) BR.bands(o, [[0, '#2a3040'], [26, '#4a5060'], [48, '#8a8a90'], [60, '#a8a8aa']], PW, H);
-    else BR.bands(o, [[0, P.dusk], [26, P.dawn], [48, P.glow], [60, '#c98a5a']], PW, H);
+    if (part === 'evening') BR.bands(o, [[0, '#231f38'], [40, '#43304a'], [69, '#6e4446'], [85, P.glow]], PW, H);
+    else if (snow) BR.bands(o, [[0, '#2a3040'], [35, '#4a5060'], [64, '#8a8a90'], [80, '#a8a8aa']], PW, H);
+    else BR.bands(o, [[0, P.dusk], [35, P.dawn], [64, P.glow], [80, '#c98a5a']], PW, H);
     const s1 = (seed % 7) * 0.9, s2 = (seed % 11) * 0.3;
     const ground = snow ? '#b4bcc6' : look === 'breaks' ? '#6e6a4a' : P.meadow, g2 = snow ? '#d8dee6' : look === 'breaks' ? '#8a8058' : P.meadow2, gd = snow ? '#8a949e' : look === 'breaks' ? '#55523a' : P.meadowD;
-    BR.ridge(o, 54, 12, 0.012, s1 * 1.7, BR.mix(P.far2, P.dawn, 0.45), PW, H);
-    BR.ridge(o, 66, 8, 0.02, s1, P.far2, PW, H);
-    BR.ridge(o, 82, 10, 0.012, s2, ground, PW, H);
-    const r = BR.rng(seed), top = X => BR.ry(X, 82, 10, 0.012, s2);
+    BR.ridge(o, 72, 16, 0.009, s1 * 1.7, BR.mix(P.far2, P.dawn, 0.45), PW, H);
+    BR.ridge(o, 88, 11, 0.015, s1, P.far2, PW, H);
+    BR.ridge(o, 109, 13, 0.009, s2, ground, PW, H);
+    const r = BR.rng(seed), top = X => BR.ry(X, 109, 13, 0.009, s2);
     const haze = BR.mix(ground, P.far2, 0.5), dry = BR.mix(ground, P.aspen2, 0.35);
     for (let X = 0; X < PW; X++) {
       const t0 = top(X);
       for (let Y = t0 + 1; Y < H; Y++) {
-        const b = BR.BAYER[(Y & 3) * 4 + (X & 3)], far = 1 - (Y - t0) / 70;
+        const b = BR.BAYER[(Y & 3) * 4 + (X & 3)], far = 1 - (Y - t0) / 93;
         if (b < far * 0.65) R(o, X, Y, 1, 1, haze);
         else if (!snow && Math.sin(X * 0.013 + seed) * Math.cos(Y * 0.07 - X * 0.004) > 0.45 && b < 0.4) R(o, X, Y, 1, 1, dry);
-        else if (Y > 196 && b < (Y - 196) / 70) R(o, X, Y, 1, 1, gd);
+        else if (Y > 261 && b < (Y - 261) / 93) R(o, X, Y, 1, 1, gd);
       }
     }
-    for (let i = 0; i < 2600; i++) { const X = (r() * PW) | 0, Y = (80 + r() * 160) | 0; if (Y > top(X) + 12) R(o, X, Y, 1, 1, r() < 0.5 ? g2 : gd); }
+    for (let i = 0; i < 4600; i++) { const X = (r() * PW) | 0, Y = (107 + r() * 213) | 0; if (Y > top(X) + 16) R(o, X, Y, 1, 1, r() < 0.5 ? g2 : gd); }
     const th = 1.25 - (area.mix.timber + area.mix.deadfall * 0.4) * 1.5;
     const tm = (X, Y) => Math.sin(X * 0.035 - Y * 0.05 + seed) + Math.sin(X * 0.011 + Y * 0.06 + seed * 0.7) * 0.8 > th;
-    for (let Y = 88; Y < H + 8; Y += 3) for (let X = 0; X < PW; X += 3) {
-      if (Y > top(X) + 4 && tm(X, Y)) {
-        const fade = BR.clamp(1 - (Y - top(X)) / 60, 0, 0.5);
-        BR.pine(o, X + (Y % 2), Y, 3 + Math.floor((Y - 80) / 40) + ((X + Y) % 2), BR.mix(P.timber, P.far2, fade));
-        if (snow && (X + Y) % 2) R(o, X + (Y % 2) - 1, Y - 3 - Math.floor((Y - 80) / 40), 3, 1, '#e8ecf0');
+    for (let Y = 117; Y < H + 8; Y += 3) for (let X = 0; X < PW; X += 3) {
+      if (Y > top(X) + 5 && tm(X / 1.333, Y / 1.333)) {
+        const fade = BR.clamp(1 - (Y - top(X)) / 80, 0, 0.5), ph = 3 + Math.floor((Y - 107) / 40) + ((X + Y) % 2);
+        BR.pine(o, X + (Y % 2), Y, ph, BR.mix(P.timber, P.far2, fade));
+        if (snow && (X + Y) % 2) R(o, X + (Y % 2) - 1, Y - ph, 3, 1, '#e8ecf0');
       }
     }
-    if (area.mix.deadfall > 0.2) for (let i = 0; i < 140; i++) {
-      const X = r() * PW, Y = 90 + r() * 150; if (Y < top(X | 0) + 3) continue;
+    if (area.mix.deadfall > 0.2) for (let i = 0; i < 250; i++) {
+      const X = r() * PW, Y = 120 + r() * 200; if (Y < top(X | 0) + 4) continue;
       if (r() < 0.5) R(o, X, Y - 6, 1, 6 + r() * 4, '#6b665c'); else BR.line(o, X, Y, X + 4, Y - 1, '#5a5048');
     }
-    if (look === 'sept' && area.mix.open > 0.45) for (let i = 0; i < 14; i++) { const X = 10 + r() * (PW - 20), Y = 96 + r() * 110; if (!tm(X, Y)) BR.aspen(o, X | 0, Y | 0, 3); }
-    for (let i = 0; i < area.mix.shale * 30; i++) {
-      const X = r() * PW, Y = 100 + r() * 100;
+    if (look === 'sept' && area.mix.open > 0.45) for (let i = 0; i < 20; i++) { const X = 10 + r() * (PW - 20), Y = 128 + r() * 147; if (!tm(X / 1.333, Y / 1.333)) BR.aspen(o, X | 0, Y | 0, 4); }
+    for (let i = 0; i < area.mix.shale * 40; i++) {
+      const X = r() * PW, Y = 133 + r() * 133;
       for (let k = 0; k < 40; k++) R(o, X + (r() - 0.5) * 16, Y + r() * 8, 1, 1, r() < 0.5 ? P.rock : P.rock2);
     }
     if (zone) for (let Y = top(FENCE) + 2; Y < H; Y += 5) { R(o, FENCE + Math.round(Math.sin(Y * 0.05) * 3), Y, 1, 3, '#3a2e22'); if (Y % 10 === 0) R(o, FENCE + Math.round(Math.sin(Y * 0.05) * 3) - 2, Y + 1, 5, 1, '#8a8272'); }
-    return { canvas: c, tm };
+    return { canvas: c, tm: (X, Y) => tm(X / 1.333, Y / 1.333) };
   }
 
   function makeGroups(area, seed, part, ch, enc, tm) {
@@ -55,28 +55,28 @@
     let density = area.elk * (enc.spooked ? 0.5 : 1) * (enc.howled ? 0.3 : 1);
     const place = (spread, avoid) => {
       let gx, gy, tries = 0;
-      do { gx = 40 + r() * (PW - 80); gy = 104 + r() * 86; tries++; } while ((tm(gx, gy) || groups.some(g => Math.abs(g.x - gx) < (avoid || 90))) && tries < 80);
+      do { gx = 53 + r() * (PW - 106); gy = 139 + r() * 115; tries++; } while ((tm(gx, gy) || groups.some(g => Math.abs(g.x - gx) < (avoid || 120))) && tries < 80);
       return [gx, gy];
     };
     const addGroup = (animals, spread) => {
       const [gx, gy] = place(spread);
       const elk = animals.map(a => ({
         a: Object.assign({}, a, { zoneOut: ch.zone ? gx > FENCE : false }),
-        x: gx + (r() - 0.5) * spread, y: gy + (r() - 0.5) * 8, flip: r() < 0.5, feed: r() < 0.6,
+        x: gx + (r() - 0.5) * spread, y: gy + (r() - 0.5) * 10, flip: r() < 0.5, feed: r() < 0.6,
         hideAt: part === 'morning' ? area.sun + 0.3 + r() * 1.0 : 99, showAt: part === 'evening' ? 17 + r() * 1.3 : 0
       }));
       groups.push({ id: groups.length, x: gx, y: gy, elk, found: false });
     };
     const n = r() < density ? (r() < 0.4 ? 2 : 1) : 0;
-    for (let k = 0; k < n; k++) addGroup(BR.group(r, ch), ch.species === 'moose' ? 10 : 20);
-    if (ch.wolves && r() < ch.wolves) { const k = 1 + ((r() * 3) | 0), black = r() < 0.3; addGroup(Array.from({ length: k }, (_, i) => ({ sp: 'wolf', sex: 'wolf', black: black && i === 0 })), 14); }
+    for (let k = 0; k < n; k++) addGroup(BR.group(r, ch), ch.species === 'moose' ? 13 : 26);
+    if (ch.wolves && r() < ch.wolves) { const k = 1 + ((r() * 3) | 0), black = r() < 0.3; addGroup(Array.from({ length: k }, (_, i) => ({ sp: 'wolf', sex: 'wolf', black: black && i === 0 })), 18); }
     const bearOdds = (ch.bears || 0) * (area.bear ? 2 : 1);
     if (bearOdds && r() < bearOdds) addGroup([{ sp: 'griz', sex: 'bear' }], 2);
     return groups;
   }
 
   const vis = (k, clock) => clock >= k.showAt && clock < k.hideAt;
-  const groupDist = gr => Math.round(BR.clamp(300 + (200 - gr.y) * 3.2, 280, 640));
+  const groupDist = gr => Math.round(BR.clamp(280 + (254 - gr.y) * 2.9, 280, 640));
   BR.glassDist = groupDist;
   const NOUN = { elk: ['elk', 'elk'], moose: ['moose', 'moose'], wolf: ['wolf', 'wolves'], griz: ['bear', 'bears'] };
 
@@ -119,7 +119,7 @@
       this.job = !!e.job;
       if (!e.seed) e.seed = (S.seed * 13 + S.day * 101 + (S.part === 'evening' ? 57 : 0) + e.area.length * 7) >>> 0;
       this.pano = buildPano(this.area, e.seed, S.part, ch.look, ch.zone);
-      if (!e.groups) { e.groups = makeGroups(this.area, e.seed, S.part, ch, e, this.pano.tm); e.view = 180; e.startClock = S.clock; }
+      if (!e.groups) { e.groups = makeGroups(this.area, e.seed, S.part, ch, e, this.pano.tm); e.view = 240; e.startClock = S.clock; }
       this.mode = null; this.touch = null; this.msg = null; this.lastDraw = 0;
       clearInterval(this.timer); this.timer = null;
       this.wake();
@@ -128,7 +128,7 @@
     wake() { this.lastInput = performance.now(); if (!this.timer) this.timer = setInterval(() => this.slow(), 1000); },
     exit() { clearInterval(this.timer); this.timer = null; clearTimeout(this.holdTimer); },
     pause() { clearInterval(this.timer); this.timer = null; },
-    over() { const S = BR.S; return S.part === 'morning' ? S.clock >= 11 : S.clock >= 19.6; },
+    over() { const S = BR.S; return S.part === 'morning' ? S.clock >= 11 : S.clock >= BR.dark(); },
     slow() {
       const S = BR.S, e = S.enc; if (!e || !e.groups) return;
       if (performance.now() - this.lastInput > 6000 && !this.touch) { clearInterval(this.timer); this.timer = null; return; }
@@ -136,6 +136,15 @@
       BR.pass(1);
       const r = Math.random;
       e.groups.forEach(gr => gr.elk.forEach(k => { if (r() < 0.12) k.feed = !k.feed; if (r() < 0.04) k.flip = !k.flip; if (r() < 0.2) k.x += (r() - 0.5) * 0.8; }));
+      // public land: sooner or later somebody walks in on them
+      const pr = BR.ch().pressure ? BR.ch().pressure(S.day) : 0, seenGroups = e.groups.filter(g => g.found && g.elk.some(k => vis(k, S.clock)));
+      if (pr && seenGroups.length && !e.bumped && Math.random() < pr * 0.012) {
+        e.bumped = true;
+        seenGroups.forEach(g => g.elk.forEach(k => { k.hideAt = S.clock; }));
+        this.msg = BR.ch().weapon === 'rifle' ? 'An orange vest tops the far ridge. Everything bolts for the timber.' : 'Another bowhunter bugles from the next ridge and walks right into them.';
+        BR.log('bumped', { via: 'glass' });
+        BR.vibe(60);
+      }
       if (this.over() && !this.msg) this.msg = S.part === 'morning' ? 'It’s warm. Everything’s bedded in the timber.' : 'Too dark to shoot. Head back.';
       if (this.mode !== 'pan') BR.draw();
       if (this.visibleCount() !== before || Math.round(S.clock * 60) % 5 === 0) this.hud();
@@ -169,7 +178,7 @@
       if (this.mode === 'loupe' && this.touch) this.drawLoupe(g, this.touch.x, this.touch.y, v, clock);
     },
     drawLoupe(g, tx, ty, v, clock) {
-      const lx = BR.clamp(Math.round(tx), LOUPE + 2, W - LOUPE - 2), ly = BR.clamp(Math.round(ty) - 58, LOUPE + 2, H - LOUPE - 2), src = (LOUPE * 2) / MAG;
+      const lx = BR.clamp(Math.round(tx), LOUPE + 2, W - LOUPE - 2), ly = BR.clamp(Math.round(ty) - 77, LOUPE + 2, H - LOUPE - 2), src = (LOUPE * 2) / MAG;
       g.save();
       g.beginPath(); g.arc(lx, ly, LOUPE, 0, Math.PI * 2); g.clip();
       g.drawImage(this.pano.canvas, tx + v - src / 2, ty - src / 2, src, src, lx - LOUPE, ly - LOUPE, LOUPE * 2, LOUPE * 2);
@@ -239,7 +248,8 @@
         btns = BR.btn('report', 'Report back to the outfitter', 'go', null, false, `$60 × ${bulls} bull${bulls === 1 ? '' : 's'} = $${60 * bulls}`);
       } else {
         const callable = !t || (t.elk[0].a.sp !== 'wolf' && t.elk[0].a.sp !== 'griz');
-        btns = (rifle ? BR.btn('shoot', 'Shoot from here', t && !over ? 'go' : '', null, !t || over, t ? `Get on the rifle · ≈${groupDist(t)} yd` : 'Mark something first') : '')
+        const d = t ? groupDist(t) : 0, cap = ch.guide ? 250 : 500, far = t && d > cap;
+        btns = (rifle ? BR.btn('shoot', 'Shoot from here', t && !over && !far ? 'go' : '', null, !t || over || far, !t ? 'Mark something first' : far ? (ch.guide ? `≈${d} yd · too far for Sam` : `≈${d} yd · too far to shoot from here`) : `Get on the rifle off your pack · ≈${d} yd`) : '')
           + BR.btn('plan', 'Plan a stalk', !rifle && t && !over ? 'go' : '', null, !t || over, t ? 'Map the approach' : 'Spot something first')
           + BR.btn('call', 'Set up and call', '', null, over || !callable, t ? 'From cover below them' : 'Blind, hoping one is close')
           + BR.btn('leave', 'Head back to camp', '');

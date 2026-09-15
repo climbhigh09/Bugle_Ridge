@@ -95,7 +95,7 @@
 
   BR.CHAPTERS = [
     {
-      id: 'co-arch', name: 'Colorado', sub: 'Archery · September rut', weapon: 'bow', species: 'elk', temp: 1, look: 'sept',
+      id: 'co-arch', name: 'Colorado', sub: 'Archery · September rut', weapon: 'bow', species: 'elk', temp: 1, look: 'sept', light: [6.3, 19.35], pressure: d => (d <= 3 ? 0.25 : 0.12),
       rut: d => (d <= 2 ? 1 : d <= 6 ? 2 : 1.5), callShy: d => (d >= 4 ? 0.75 : 1), wolves: 0, bears: 0, dysentery: true,
       areas: [CO_AREAS.bench, CO_AREAS.burn, CO_AREAS.wallow],
       camps: [camp('trailhead', 'Truck at the trailhead', 'Warm and dry. Longer hikes in the dark.', 1.5, 0, ['jug']),
@@ -108,7 +108,7 @@
         'Hank and I hunted that country for thirty years. Tell him I said to go easy on you. He won’t.']
     },
     {
-      id: 'co-rifle', name: 'Colorado', sub: '2nd rifle · October', weapon: 'rifle', species: 'elk', temp: 0.3, look: 'snow',
+      id: 'co-rifle', name: 'Colorado', sub: '2nd rifle · October', weapon: 'rifle', species: 'elk', temp: 0.3, look: 'snow', light: [6.7, 18.8], pressure: d => (d <= 2 ? 0.6 : 0.35),
       rut: () => 0.3, callShy: () => 0.55, wolves: 0, bears: 0, dysentery: true,
       areas: [Object.assign({}, CO_AREAS.bench, { blurb: 'Snowy parks. Elk feed out at first and last light.' }), CO_AREAS.burn,
         Object.assign({}, CO_AREAS.wallow, { name: 'Dark timber', blurb: 'Bedded elk. Calls barely work after the rut.' })],
@@ -119,11 +119,11 @@
       legal: a => (a.sp !== 'elk' ? 'wrong species' : a.sex === 'bull' ? (a.pts === 1 ? 'A spike is a bull. Your tag was antlerless.' : 'That was a bull. Your tag was antlerless.') : null),
       giveRifle: true,
       sam: ['You drew a second-season cow tag. Antlerless only. A spike has antlers, so a spike is a bull.',
-        'Wear your orange.',
+        'Wear your orange. Shooting hours are the same as September: half an hour either side of the sun.',
         'Take my old .30-06. It’s zeroed at two hundred yards.']
     },
     {
-      id: 'idaho', name: 'Idaho', sub: 'Zone tag · wolf country', weapon: 'rifle', species: 'elk', temp: 0.7, look: 'breaks',
+      id: 'idaho', name: 'Idaho', sub: 'Zone tag · wolf country', weapon: 'rifle', species: 'elk', temp: 0.7, look: 'breaks', light: [6.8, 19.3], pressure: () => 0.2,
       rut: () => 0.7, callShy: () => 0.45, wolves: 0.4, bears: 0, dysentery: true, zone: true, wolfTag: 32,
       areas: [{ id: 'canyon', name: 'Canyon face', blurb: 'Steep and open across the river. Long shots.', miles: 1.6, sun: 8.2, mix: M(0.5, 0.3, 0, 0.2), elk: 0.8 },
         { id: 'draw', name: 'Brushy draw', blurb: 'Thick brush and deadfall. Close encounters.', miles: 1.1, sun: 9.4, mix: M(0.35, 0.35, 0.3, 0), elk: 0.7 },
@@ -134,11 +134,12 @@
       elk: { cows: [2, 5], calves: 0.3, bull: 0.55, pts: [1, 2, 4, 5, 5, 6] },
       legal: a => (a.sp !== 'elk' ? 'wrong species' : a.sex === 'cow' ? 'Your tag was antlered elk only.' : a.zoneOut ? 'He was east of the fence line. Wrong zone.' : null),
       sam: ['Idaho zone tag. Antlered elk only, and spikes count.',
+        'Shooting hours are half an hour before sunrise to half an hour after sunset.',
         'Your zone ends at the fence line on the Big Creek divide. West of the fence is yours. East isn’t, no matter where the elk walk.',
         'Wolf tags are cheap over there. If you’re going to shoot a wolf, buy the tag first.']
     },
     {
-      id: 'montana', name: 'Montana', sub: 'Public land · brow-tined bulls', weapon: 'rifle', species: 'elk', temp: 0.25, look: 'breaks',
+      id: 'montana', name: 'Montana', sub: 'Public land · brow-tined bulls', weapon: 'rifle', species: 'elk', temp: 0.25, look: 'breaks', light: [7, 18.2], pressure: d => (d <= 3 ? 0.6 : 0.4),
       rut: () => 0.2, callShy: () => 0.5, wolves: 0.25, bears: 0.2, dysentery: true, wolfTag: 50, grizDraw: true, charge: 0.3,
       areas: [{ id: 'coulee', name: 'Coulee breaks', blurb: 'Big open country, little cover.', miles: 3.2, sun: 7.8, mix: M(0.75, 0.1, 0, 0.15), elk: 0.8 },
         { id: 'bma', name: 'Block Management ranch', blurb: 'Sign in at the box. Walk-in only.', miles: 1.0, sun: 8, mix: M(0.7, 0.15, 0.15, 0), elk: 0.7 },
@@ -150,10 +151,11 @@
       legal: a => (a.sp !== 'elk' ? 'wrong species' : a.sex === 'cow' ? 'Your tag was bulls only.' : a.pts < 3 ? 'No brow tines. This district is brow-tined bulls only.' : null),
       sam: ['Montana general tag. It has to be a brow-tined bull in that district. No spikes, no forkhorns.',
         'A grizzly tag is a draw, and almost nobody gets one. If you didn’t draw, leave the bears alone.',
+        'November light goes fast up there. Half an hour after sunset, you’re done.',
         'Hang your meat a hundred yards off the carcass and come back into the wind.']
     },
     {
-      id: 'alaska', name: 'Alaska', sub: 'Moose · float hunt', weapon: 'rifle', species: 'moose', temp: 0.55, look: 'ak',
+      id: 'alaska', name: 'Alaska', sub: 'Moose · float hunt', weapon: 'rifle', species: 'moose', temp: 0.55, look: 'ak', light: null, pressure: () => 0.03,
       rut: () => 1.4, callShy: () => 1, wolves: 0, bears: 0.3, dysentery: false, grizDraw: true, charge: 0.35, meatOnBone: true, sameDayAirborne: true,
       areas: [{ id: 'willows', name: 'Willow flats', blurb: 'Glass the willows at first light.', miles: 0.6, sun: 8.8, mix: M(0.5, 0.15, 0.35, 0), elk: 0.85 },
         { id: 'slough', name: 'Slough bend', blurb: 'Call from the bank. Patience.', miles: 1.2, sun: 9.5, mix: M(0.2, 0.5, 0.3, 0), elk: 0.8, callOnly: true },
@@ -168,7 +170,7 @@
         'Hank’s going with you. His last float, he says.']
     },
     {
-      id: 'epilogue', name: 'Colorado', sub: 'Grandpa Sam’s hunt', weapon: 'rifle', species: 'elk', temp: 0.3, look: 'snow', guide: true,
+      id: 'epilogue', name: 'Colorado', sub: 'Grandpa Sam’s hunt', weapon: 'rifle', species: 'elk', temp: 0.3, look: 'snow', guide: true, light: [6.7, 18.8], pressure: () => 0.3,
       rut: () => 0.3, callShy: () => 0.6, wolves: 0, bears: 0, dysentery: true,
       areas: [Object.assign({}, CO_AREAS.bench, { miles: 0.4, blurb: 'Short walk. Sam can glass from the truck.' }),
         Object.assign({}, CO_AREAS.burn, { miles: 1, blurb: 'Rough going for old legs.' }),
@@ -184,8 +186,11 @@
   ];
   BR.ch = () => BR.CHAPTERS[BR.S.chapter];
   BR.group = (r, ch) => (ch.species === 'moose' ? mooseGroup(r) : elkGroup(r, ch.elk));
-  BR.legal = a => {
-    const S = BR.S;
+  // shooting hours: sunrise − 30 min to sunset + 30 min. Alaska has no shooting hours for moose.
+  BR.dark = () => { const l = BR.ch().light; return l ? l[1] + 0.25 : 20.5; };
+  BR.legal = (a, clock) => {
+    const S = BR.S, l = BR.ch().light;
+    if (l && clock != null && (clock < l[0] || clock > l[1])) return `You shot at ${BR.fmt(clock)}. Legal light was ${BR.fmt(l[0])} to ${BR.fmt(l[1])}.`;
     if (a.sp === 'wolf') return S.tags.wolf ? null : 'You shot a wolf without a wolf tag.';
     if (a.sp === 'griz') return S.tags.grizzly ? null : 'You shot a grizzly without a grizzly tag.';
     return BR.ch().legal(a, S);

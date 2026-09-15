@@ -17,7 +17,8 @@
       bugle: ['HE HERDED HIS COWS OFF', 'You told him to gather his cows and leave. He did.'],
       interest: ['LOST INTEREST', 'The answers got farther off, then stopped.']
     }[o.cause] || ['IT WENT QUIET', '']),
-    miss: o => [`CLEAN MISS · ${o.high ? 'HIGH' : 'LOW'}`, `The ${o.weapon === 'rifle' ? 'bullet' : 'arrow'} went ${o.high ? 'over' : 'under'} it at ${o.range} yards.`],
+    miss: o => o.deflected ? ['DEFLECTED', `The ${o.weapon === 'rifle' ? 'bullet' : 'arrow'} clipped the branch and went wild.`] : [`CLEAN MISS · ${o.high ? 'HIGH' : 'LOW'}`, `The ${o.weapon === 'rifle' ? 'bullet' : 'arrow'} went ${o.high ? 'over' : 'under'} it at ${o.range} yards.`],
+    bumped: () => ['BUMPED', BR.ch().weapon === 'rifle' ? 'Two orange vests walked right through them. Public land.' : 'Another bowhunter came crashing up the trail, cow calling. Everything left.'],
     walked: () => ['IT WALKED', 'It stepped into the timber before you got a shot off.'],
     passed: () => ['YOU PASSED', 'You let it go.'],
     lost: () => ['LOST IT', 'You searched until dark and never found it. Tomorrow goes to looking.'],
@@ -30,18 +31,18 @@
     enter(o) { this.o = o; const f = OUT[o.kind] ? OUT[o.kind](o) : ['HUNT OVER', '']; this.title = f[0]; this.text = f[1]; this.hud(); },
     draw(g) {
       const o = this.o, look = BR.ch().look, snow = look === 'snow';
-      BR.bands(g, BR.S.part === 'evening' ? [[0, '#231f38'], [50, '#43304a'], [80, P.glow]] : snow ? [[0, '#4a5462'], [60, '#8a94a0']] : [[0, P.dusk], [40, P.dawn], [70, P.glow]]);
-      BR.ridge(g, 96, 8, 0.03, 2.2, P.far2);
-      for (let X = 0; X < W + 4; X += 5) BR.pine(g, X, 150, 26 + ((X * 11) % 14), P.timber);
-      BR.bands(g, [[148, snow ? '#c4ccd6' : '#56673f'], [H, snow ? '#8a949e' : '#34422c']]);
-      BR.grass(g, 149, 900, 5, snow ? ['#e8ecf0', '#b4bcc8'] : [P.meadow2, P.meadowD, P.meadow3]);
-      if (o.kind === 'charge') BR.SPR.draw(g, BR.SPR.get({ sp: 'griz', sex: 'bear' }, 'charge', 1, { flip: true }), 110, 206);
-      else if (o.kind === 'bust' || o.kind === 'miss' || o.kind === 'hangup') {
+      BR.bands(g, BR.S.part === 'evening' ? [[0, '#231f38'], [67, '#43304a'], [107, P.glow]] : snow ? [[0, '#4a5462'], [80, '#8a94a0']] : [[0, P.dusk], [53, P.dawn], [93, P.glow]]);
+      BR.ridge(g, 128, 11, 0.0225, 2.2, P.far2);
+      for (let X = 0; X < W + 4; X += 6) BR.pine(g, X, 200, 34 + ((X * 11) % 18), P.timber);
+      BR.bands(g, [[197, snow ? '#c4ccd6' : '#56673f'], [H, snow ? '#8a949e' : '#34422c']]);
+      BR.grass(g, 199, 1600, 5, snow ? ['#e8ecf0', '#b4bcc8'] : [P.meadow2, P.meadowD, P.meadow3]);
+      if (o.kind === 'charge') BR.SPR.draw(g, BR.SPR.get({ sp: 'griz', sex: 'bear' }, 'charge', 1.3, { flip: true }), 147, 275);
+      else if (['bust', 'miss', 'hangup', 'bumped'].includes(o.kind)) {
         const an = BR.ch().species === 'moose' ? { sp: 'moose', sex: 'cow' } : { sp: 'elk', sex: 'cow' };
-        const spr = BR.SPR.get(an, 'walk', 0.3, { flip: true });
-        for (let i = 0; i < 3; i++) BR.SPR.draw(g, spr, 50 + i * 36, 146 - (i % 2) * 4);
+        const spr = BR.SPR.get(an, 'walk', 0.4, { flip: true });
+        for (let i = 0; i < 3; i++) BR.SPR.draw(g, spr, 67 + i * 48, 195 - (i % 2) * 5);
       }
-      BR.sprite(g, BR.HUNT, BR.HCOL, 20, 200, 3, false);
+      BR.sprite(g, BR.HUNT, BR.HCOL, 27, 266, 4, false);
     },
     hud() {
       const S = BR.S, bad = !['passed', 'predator'].includes(this.o.kind);
@@ -60,6 +61,8 @@
     const ev = S.events.filter(x => x.day === S.day), has = S.items, ch = BR.ch(), rifle = ch.weapon === 'rifle';
     const find = t => ev.filter(x => x.type === t).pop();
     let x;
+    if ((x = find('miss')) && x.deflected) return { q: 'You shot through a branch. An arrow finds every twig between you and the elk.', skill: 'If there’s brush in the lane, wait one step or move one step.', gear: null };
+    if ((x = find('bumped'))) return { q: pick(['Public land. Somebody always walks in.', 'Nothing you did wrong. Somebody else walked in on them.', 'Crowds push elk. The ones that stay are the ones nobody can reach.']), skill: 'Go earlier, go farther, or hunt the pocket nobody wants to climb to.', gear: null };
     if ((x = find('illegal'))) return { q: `${x.reason} That ends the season.`, skill: 'Know exactly what your tag allows before you ever pick up the weapon.', gear: null };
     if ((x = find('lostday')) && x.reason === 'grizzly') return { q: 'Everybody’s legs quit the first time a grizzly runs at them. You’re alive, and you lost a day.', skill: 'In bear country, make noise in the thick stuff and come into kill sites upwind.', gear: null };
     if ((x = find('lost'))) {
@@ -97,13 +100,14 @@
     }
     if ((x = find('hangup'))) return x.cause === 'overcall' ? { q: 'You called like a whole herd. A real cow calls, then goes quiet and feeds.', skill: 'Call, then wait. Let it come looking.', gear: ch.weapon === 'bow' && !has.reeds ? 'reeds' : null } : { q: 'It lost interest.', skill: 'Rake and call soft. Sound like animals doing animal things.', gear: null };
     if ((x = find('walked'))) return { q: 'It gave you a window and it closed.', skill: 'Be ready before it steps into the opening.', gear: null };
-    if ((x = find('gone'))) return { q: 'Too slow. Once the sun’s up they walk to bed.', skill: 'Shorter route, faster, while they’re still feeding.', gear: null };
+    if ((x = find('gone'))) return { q: pick(['Too slow. Once the sun’s up they walk to bed.', 'They beat you to the timber. They always know the way.']), skill: 'Hike hard while you’re far out and hidden. Slow down only when you’re close.', gear: null };
     if ((x = find('passed'))) return { q: 'You let one walk. Only you know if that was right.', skill: 'If you’re not sure what it is, passing is always legal.', gear: null, good: true };
-    if ((x = find('noelk'))) return { q: 'Empty country. It happens more than anybody admits.', skill: 'If the open is empty at first light, get in the timber.', gear: null };
+    if ((x = find('noelk'))) return { q: pick(['Empty country. It happens more than anybody admits.', 'Nothing home. Better you learn that at dawn than at noon.', 'You can’t kill them where they aren’t.']), skill: pick(['If the open is empty at first light, get in the timber.', 'Check the next drainage before you burn a morning.']), gear: null };
     if ((x = find('job'))) return { q: `Good money today, $${x.pay}. Now go find your own.`, skill: 'Spend it where it fixes a real problem.', gear: S.suggest };
     if ((x = find('practice'))) return { q: 'Arms getting stronger. I can see it in your hold.', skill: 'Heavier bows and longer holds come from reps.', gear: null };
-    return { q: 'Quiet day. Rest up.', skill: 'First light tomorrow.', gear: null };
+    return { q: pick(['Quiet day. Rest up.', 'Sometimes the woods are just empty.', 'Days like this make the good ones.']), skill: 'First light tomorrow.', gear: null };
   }
+  const pick = a => a[(Math.random() * a.length) | 0];
   BR.lesson = lesson;
   const DISTRACT = ['Shoot sooner, before it can think about it.', 'Call more. They love to hear it.', 'Walk faster through the timber.', 'Bigger gun fixes most of this.', 'Take the long shot while you have it.'];
 
@@ -113,6 +117,8 @@
       const S = BR.S, ch = BR.ch();
       if (S.lessonDay !== S.day) {
         S.lesson = lesson(S); S.lessonDay = S.day;
+        if (S.lesson.q === S.lastLessonQ) S.lesson.q = pick(['Same as yesterday, and you know it. ', 'I’m not saying it a third time. ']) + S.lesson.q;
+        S.lastLessonQ = S.lesson.q.replace(/^(Same as yesterday, and you know it\. |I’m not saying it a third time\. )/, '');
         if (S.lesson.gear) S.suggest = S.lesson.gear;
         if (ch.guide) { const opts = [S.lesson.skill].concat(DISTRACT.sort(() => Math.random() - 0.5).slice(0, 2)); S.lesson.opts = opts.sort(() => Math.random() - 0.5); S.lesson.picked = null; }
       }
@@ -120,8 +126,7 @@
     },
     draw(g) {
       BR.campArt(g, 'night');
-      BR.sprite(g, BR.MENTOR, BR.MCOL, 70, 162, 2, false);
-      BR.sprite(g, BR.HUNT_SIT, BR.HSCOL, 138, 176, 2, true);
+      BR.fireFolk(g);
     },
     gearInfo(id) {
       if (!id) return null;
