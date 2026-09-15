@@ -1,5 +1,5 @@
-// Bugle Ridge 1.2.1 (202609151305)
-const CACHE = 'bugle-ridge-202609151305';
+// Bugle Ridge 1.2.2 (202609151331)
+const CACHE = 'bugle-ridge-202609151331';
 const FILES = ["./","index.html","style.css","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","icons/apple-touch-icon.png","js/core.js","js/data.js","js/sprites.js","js/animals.js","js/season.js","js/camp.js","js/glass.js","js/stalk.js","js/call.js","js/shot.js","js/range.js","js/debrief.js"];
 self.addEventListener('install', e => {
   e.waitUntil((async () => {

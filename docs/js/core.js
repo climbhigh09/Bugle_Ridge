@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const BR = (window.BR = {});
-  BR.VERSION = '1.2.1';
+  BR.VERSION = '1.2.2';
   window.addEventListener('error', e => console.error('JS error: ' + e.message + ' @' + e.filename + ':' + e.lineno));
   const W = (BR.W = 240), H = (BR.H = 320);
 
@@ -368,9 +368,10 @@
   const updateSheet = (title, body, extra) => BR.showOverlay(
     `<div class="t hi">${title}</div><div class="tagline">${body}</div>${extra || ''}${BR.btn('close', 'Close')}`,
     { close: () => BR.closeOverlay(), restart: () => { BR.save(); if (window.Android && window.Android.restart) window.Android.restart(); else location.reload(); } });
+  const shellInfo = () => { try { return window.Android && window.Android.shell ? ` <span class="dim">(${BR.esc(window.Android.shell())})</span>` : ''; } catch (_) { return ''; } };
   window.BRUpdateResult = r => {
     if (!r || r.status === 'error') updateSheet('NO CONNECTION', 'Couldn’t reach GitHub. Try again when you have signal. Nothing changed.');
-    else if (r.status === 'current') updateSheet('UP TO DATE', `You have the latest version, v${BR.VERSION}.`);
+    else if (r.status === 'current') updateSheet('UP TO DATE', `You have the latest version, v${BR.VERSION}.${shellInfo()}`);
     else updateSheet('UPDATE READY', `v${r.version} is downloaded. Restart to play it. Your hunter and save carry over.`, BR.btn('restart', 'Restart now', 'go'));
   };
   BR.checkUpdates = async () => {

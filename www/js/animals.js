@@ -220,11 +220,12 @@
   A.poseOpt = (pose, sp) => (pose === 'dead' ? { down: { elk: 26, moose: 34, wolf: 14, griz: 8 }[sp] || 26 } : null);
 
   // ---------------- hit zones (world units, facing right) ----------------
+  // Vitals sit just behind the front leg: lungs centred a hand behind the crease, heart low and tight to the leg.
   const Z = {
-    elk: { vit: [16, -42, 8, 7], heart: [18, -35, 3], sh: [22, 36, -62, -44], spineY: -55, neckX: 34, liver: [5, 11], hamX: -22, legY: -30 },
-    moose: { vit: [22, -54, 10, 9], heart: [24, -45, 3.5], sh: [28, 44, -82, -58], spineY: -72, neckX: 44, liver: [8, 15], hamX: -28, legY: -38 },
-    wolf: { vit: [8, -24, 4, 4], heart: [9, -20, 1.8], sh: [12, 17, -33, -25], spineY: -30, neckX: 16, liver: [0, 4], hamX: -14, legY: -16 },
-    griz: { vit: [14, -24, 7, 6], heart: [16, -17, 2.5], sh: [18, 30, -44, -26], spineY: -36, neckX: 30, liver: [2, 8], hamX: -22, legY: -10 }
+    elk: { vit: [10, -43, 8.5, 7], heart: [15, -35, 3], sh: [18, 36, -62, -44], spineY: -55, neckX: 34, liver: [-4, 1], hamX: -22, legY: -30 },
+    moose: { vit: [15, -54, 10, 9], heart: [21, -45, 3.5], sh: [24, 44, -82, -58], spineY: -72, neckX: 44, liver: [0, 5], hamX: -28, legY: -38 },
+    wolf: { vit: [3, -24, 4, 4], heart: [6, -20, 1.8], sh: [8, 17, -33, -25], spineY: -30, neckX: 16, liver: [-5, -2], hamX: -14, legY: -16 },
+    griz: { vit: [8, -24, 7, 6], heart: [12, -17, 2.5], sh: [14, 30, -44, -26], spineY: -36, neckX: 30, liver: [-5, 0], hamX: -22, legY: -10 }
   };
   A.zone = (sp, wx, wy, angle, onBody) => {
     if (!onBody) return 'miss';

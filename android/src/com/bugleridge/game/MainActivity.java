@@ -18,7 +18,6 @@ import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -36,13 +35,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Thin offline wrapper. The game always loads from file:///android_asset/www/ so the save (localStorage) never moves.
- * "Check for updates" in the game menu is the only thing that touches the network: it downloads a newer build from
- * GitHub Pages into files/www, and requests for asset files are answered from there while that copy is newer.
+ * Thin offline wrapper. "Check for updates" in the game menu is the only thing that touches the network: it downloads
+ * a newer build from GitHub Pages into files/www. On launch (and on restart) the game loads from that folder if it's
+ * newer than the build inside the APK, otherwise from assets. Both are file:// pages, which share one localStorage
+ * origin, so the save is the same either way.
  */
 public class MainActivity extends Activity {
     static final String GAME = "file:///android_asset/www/index.html";
-    static final String ASSET_PREFIX = "file:///android_asset/www/";
     static final String SITE = "https://climbhigh09.github.io/Bugle_Ridge/";
     private WebView web;
     private File updateDir;
@@ -85,27 +84,20 @@ public class MainActivity extends Activity {
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
-                return !req.getUrl().toString().startsWith("file:///android_asset/");  // stay inside the game
-            }
-
-            @Override
-            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
-                String url = req.getUrl().toString();
-                if (!url.startsWith(ASSET_PREFIX)) return null;
-                String rel = url.substring(ASSET_PREFIX.length());
-                int q = rel.indexOf('?'); if (q >= 0) rel = rel.substring(0, q);
-                File f = new File(updateDir, rel);
-                if (rel.contains("..") || !f.isFile()) return null;
-                try {
-                    return new WebResourceResponse(mime(rel), "utf-8", new FileInputStream(f));
-                } catch (Exception e) {
-                    return null;
-                }
+                return !req.getUrl().toString().startsWith("file://");  // stay inside the game
             }
         });
         setContentView(web);
         hideBars();
-        web.loadUrl(GAME);
+        web.loadUrl(gameUrl());
+    }
+
+    /** The downloaded build if it's newer than this APK's, else the bundled one. */
+    private String gameUrl() {
+        String downloaded = readText(new File(updateDir, "version.txt"));
+        File index = new File(updateDir, "index.html");
+        if (downloaded != null && index.isFile() && newer(downloaded, installedVersion())) return "file://" + index.getAbsolutePath();
+        return GAME;
     }
 
     private String installedVersion() {
@@ -244,7 +236,10 @@ public class MainActivity extends Activity {
 
     class Bridge {
         @JavascriptInterface
-        public String shell() { return "android-" + installedVersion(); }
+        public String shell() {
+            String url = gameUrl();
+            return "app " + installedVersion() + (url.equals(GAME) ? " · built-in files" : " · downloaded " + readText(new File(updateDir, "version.txt")));
+        }
 
         /** Runs only when the player taps "Check for updates". Downloads into a temp folder, then swaps it in whole. */
         @JavascriptInterface
@@ -283,7 +278,7 @@ public class MainActivity extends Activity {
         public void restart() {
             runOnUiThread(new Runnable() {
                 @Override
-                public void run() { web.clearCache(false); web.loadUrl(GAME); }
+                public void run() { web.clearCache(true); web.loadUrl(gameUrl()); }
             });
         }
 

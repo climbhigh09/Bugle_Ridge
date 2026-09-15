@@ -103,15 +103,26 @@
 
   // ---------------- meat care ----------------
   const METHODS = {
-    boned: { name: 'Gutless, boned out', blurb: 'Cools fastest. Lightest to pack.', spoil: 0.06, weight: 1 },
-    quarters: { name: 'Quarters on the bone', blurb: 'Keeps the bone in. Holds heat in the hams.', spoil: 0.2, weight: 1.35 },
-    whole: { name: 'Gut it and drag it whole', blurb: 'Quick. Slow to cool.', spoil: 0.5, weight: 1.9 }
+    boned: { name: 'Gutless, boned out', blurb: 'Slowest to cut. Lightest to carry, cools fastest.', spoil: 0.06, weight: 1 },
+    quarters: { name: 'Quarters on the bone', blurb: 'Faster to cut. Heavier to carry; hams hold heat.', spoil: 0.2, weight: 1.35 },
+    whole: { name: 'Gut it and drag it whole', blurb: 'Quickest. Heaviest, and slow to cool.', spoil: 0.5, weight: 1.9 }
   };
   const HANGS = {
     shade: { name: 'Hang it in the shade, 100 yd off', blurb: 'North side of the timber, away from the carcass.', f: 1, pred: 0 },
     creek: { name: 'Hang it over the creek', blurb: 'Cold air off the water.', f: 0.8, pred: 0.05 },
     sun: { name: 'Pile it in the meadow', blurb: 'Close and easy to find.', f: 2.2, pred: 0.15 },
     ground: { name: 'Leave it by the carcass', blurb: 'Come back for it in the morning.', f: 1.6, pred: 0.3 }
+  };
+  // Butchering plus packing, in hours. Boned-out elk packs at roughly a 12-hour day per 5 miles; heavier loads take
+  // longer, moose and grizzly twice as long. Boning out is the slowest cut but the lightest carry, so it only pays on long hauls.
+  const PROC = { boned: 4, quarters: 2.5, whole: 1 };
+  BR.packPlan = (an, areaId, method) => {
+    const S = BR.S, a = BR.area(areaId), miles = (a ? a.miles : 1) * 1.5, big = an.sp === 'moose' || an.sp === 'griz' ? 2 : 1;
+    const proc = PROC[method] * (big === 2 ? 1.6 : an.sex === 'cow' ? 0.8 : 1);
+    const pack = miles / 5 * 12 * METHODS[method].weight * big * (S.items.framePack ? 0.8 : 1);
+    const hours = proc + pack, today = Math.max(0, BR.dark() - S.clock);
+    const extra = hours <= today ? 0 : Math.ceil((hours - today) / 12);
+    return { miles: +miles.toFixed(1), proc, pack, hours, today, extra };
   };
   BR.scenes.meat = {
     enter() { const e = BR.S.enc; if (!e.meat) e.meat = { step: 'method' }; this.hud(); },
@@ -125,7 +136,7 @@
       if (m.step === 'method') {
         BR.hud(`<div class="row"><span class="t ok">TAG ON HIM</span><span class="hi">${BR.fmt(S.clock)}</span></div>
           <div class="tagline">${ch.temp >= 0.7 ? 'It’s warm. The clock on the meat started when he went down.' : 'It’s cold enough to buy you some time.'}</div>
-          <div class="list">${Object.entries(METHODS).map(([k, v]) => BR.btn('method', v.name, '', k, false, v.blurb)).join('')}</div>`);
+          <div class="list">${Object.entries(METHODS).map(([k, v]) => { const pl = BR.packPlan(a, e.area, k); return BR.btn('method', v.name, '', k, false, `${v.blurb} ≈${pl.proc.toFixed(1)} h to cut, ${pl.pack.toFixed(1)} h to pack ${pl.miles} mi${pl.extra ? ` · ${pl.extra} more day${pl.extra === 1 ? '' : 's'}` : ' · done by dark'}`); }).join('')}</div>`);
       } else if (m.step === 'hang') {
         BR.hud(`<div class="row"><span class="t">WHERE DOES THE MEAT GO?</span><span class="hi">${METHODS[m.method].name}</span></div>
           <div class="list">${Object.entries(HANGS).map(([k, v]) => BR.btn('hang', v.name, '', k, false, v.blurb)).join('')}</div>`);
@@ -139,7 +150,7 @@
         const load = S.items.framePack ? 100 : 70, trips = Math.max(1, Math.ceil(saved * METHODS[m.method].weight / load));
         BR.hud(`<div class="row"><span class="t ${m.spoil > 0.3 ? 'bad' : 'ok'}">MEAT</span><span class="hi">${saved} lb saved</span></div>
           <div class="quote">${m.text}</div>
-          <div class="row sm"><span class="dim">${m.truck} mi from the truck · ${m.days} day${m.days === 1 ? '' : 's'} packing · ${trips} trip${trips === 1 ? '' : 's'}</span><span class="dim">${Math.round(m.spoil * 100)}% lost</span></div>
+          <div class="row sm"><span class="dim">${m.truck} mi from the truck · ${m.hours} h of work · ${m.days > 1 ? `${m.days - 1} more day${m.days === 2 ? '' : 's'}` : 'done by dark'} · ${trips} trip${trips === 1 ? '' : 's'}</span><span class="dim">${Math.round(m.spoil * 100)}% lost</span></div>
           <div class="sp"></div>${BR.btn('done', 'Pack it out', 'go')}`);
       }
     },
@@ -151,9 +162,10 @@
         const h = HANGS[arg], M = METHODS[m.method];
         let spoil = M.spoil * ch.temp * h.f * (S.items.gameBags ? 0.7 : 1);
         if (ch.wolves || ch.bears) spoil += h.pred;
-        m.days = BR.packDays(an.sp, e.area);
-        m.truck = +(BR.area(e.area).miles * 1.5).toFixed(1);
-        if (m.days > 1) spoil += (m.days - 1) * 0.06 * ch.temp * h.f;
+        const plan = BR.packPlan(an, e.area, m.method);
+        m.hours = +plan.hours.toFixed(1); m.days = 1 + plan.extra; m.truck = plan.miles;
+        BR.pass(Math.min(plan.hours, plan.today) * 60);
+        if (plan.extra) spoil += plan.extra * 0.06 * ch.temp * h.f + (h.pred ? h.pred * 0.5 : 0);  // meat on the mountain overnight
         m.spoil = BR.clamp(spoil, 0, 0.95);
         const lines = [];
         if (m.spoil < 0.1) lines.push('Cool, clean meat. Hank would approve.');
@@ -183,7 +195,7 @@
           : m.spoil >= 0.6 ? 'Most of the meat spoiled. That’s wanton waste.' : null;
         BR.log('kill', Object.assign({ method: m.method, hang: m.hang, spoil: m.spoil }, e.shotResult));
         S.tag = { sp: an.sp, desc: BR.describe(an), day: S.day, range: e.shotResult.range, area: e.area, spoil: m.spoil };
-        for (let i = 0; i < m.days; i++) BR.skipDay('packout');
+        for (let i = 1; i < m.days; i++) BR.skipDay('packout');
         S.over = true;
         if (violation) { S.verdict = { illegal: true, reason: violation }; S.stats.violations++; BR.log('illegal', { reason: violation }); BR.go('outcome', { kind: 'illegal', reason: violation }); return; }
         S.part = 'evening';
