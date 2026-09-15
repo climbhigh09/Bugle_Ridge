@@ -35,6 +35,7 @@
     rangefinder: { name: 'Rangefinder', price: 420, blurb: 'Exact yardage at the shot. No more guessing.' },
     gameBags: { name: 'Game bags', price: 40, blurb: 'Meat cools faster and stays clean.' },
     framePack: { name: 'Frame pack', price: 300, blurb: 'Fewer trips on the pack-out.' },
+    bearSpray: { name: 'Bear spray', price: 50, blurb: 'Turns a charging grizzly. One can, one bear. Never go back where you used it.', bears: true },
     reeds: { name: 'Diaphragm reeds', price: 25, blurb: 'Unlocks the estrus call. Hands free at full draw.', weapon: 'bow' },
     fixedBlades: { name: 'Fixed-blade broadheads', price: 60, blurb: 'Hold together on bone better than mechanicals.', weapon: 'bow' },
     sticks: { name: 'Shooting sticks', price: 60, blurb: 'A steadier rest for standing shots.', weapon: 'rifle' },

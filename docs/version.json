@@ -1,0 +1,20 @@
+{
+  "version": "1.2.0",
+  "build": "202609151222",
+  "files": [
+    "index.html",
+    "style.css",
+    "js/core.js",
+    "js/data.js",
+    "js/sprites.js",
+    "js/animals.js",
+    "js/season.js",
+    "js/camp.js",
+    "js/glass.js",
+    "js/stalk.js",
+    "js/call.js",
+    "js/shot.js",
+    "js/range.js",
+    "js/debrief.js"
+  ]
+}

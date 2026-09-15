@@ -196,6 +196,7 @@
       if (a === 'src') { this.src = arg; this.hud(); return; }
       if (a === 'drink') { S.water = { src: this.src, method: arg }; if (BR.drink(this.src, arg)) { this.src = null; this.hud(); } return; }
       if (a === 'water') { S.water = null; if (S.part === 'morning') S.drank = false; this.src = null; this.hud(); return; }
+      if ((a === 'area' || a === 'job') && BR.bearTrap(arg)) { BR.save(); BR.go('dead', { cause: 'bear' }); return; }
       if (a === 'area') {
         const area = BR.area(arg), c = BR.conditions();
         BR.pass(area.miles * 25 * cp.hike);

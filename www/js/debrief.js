@@ -24,7 +24,8 @@
     lost: () => ['LOST IT', 'You searched until dark and never found it. Tomorrow goes to looking.'],
     charge: () => ['GRIZZLY', 'A grizzly came out of the timber at a run and stopped at 15 yards. Then it left. You need a day, and clean pants.'],
     illegal: o => ['SEASON OVER', o.reason + ' You tag it, call it in, and go home.'],
-    predator: o => ['TAGGED', o.sp === 'wolf' ? 'A wolf, with the tag to go with it.' : 'A grizzly. You drew the tag, and you filled it.']
+    predator: o => ['TAGGED', (o.sp === 'wolf' ? 'A wolf, with the tag to go with it.' : 'A grizzly. You drew the tag, and you filled it.') + ` Packing it out takes ${o.days || 1} day${(o.days || 1) === 1 ? '' : 's'}.`],
+    sprayed: () => ['BEAR SPRAY', 'A grizzly came out of the timber at a run. You emptied the can in its face at 10 yards and it turned and crashed off.']
   };
 
   BR.scenes.outcome = {
@@ -37,6 +38,7 @@
       BR.bands(g, [[197, snow ? '#c4ccd6' : '#56673f'], [H, snow ? '#8a949e' : '#34422c']]);
       BR.grass(g, 199, 1600, 5, snow ? ['#e8ecf0', '#b4bcc8'] : [P.meadow2, P.meadowD, P.meadow3]);
       if (o.kind === 'charge') BR.SPR.draw(g, BR.SPR.get({ sp: 'griz', sex: 'bear' }, 'charge', 1.3, { flip: true }), 147, 275);
+      if (o.kind === 'sprayed') BR.SPR.draw(g, BR.SPR.get({ sp: 'griz', sex: 'bear' }, 'walk', 1.1, { flip: false }), 190, 240);
       else if (['bust', 'miss', 'hangup', 'bumped'].includes(o.kind)) {
         const an = BR.ch().species === 'moose' ? { sp: 'moose', sex: 'cow' } : { sp: 'elk', sex: 'cow' };
         const spr = BR.SPR.get(an, 'walk', 0.4, { flip: true });
@@ -45,7 +47,7 @@
       BR.sprite(g, BR.HUNT, BR.HCOL, 27, 266, 4, false);
     },
     hud() {
-      const S = BR.S, bad = !['passed', 'predator'].includes(this.o.kind);
+      const S = BR.S, bad = !['passed', 'predator', 'sprayed'].includes(this.o.kind);
       BR.hud(`
         <div class="row"><span class="t ${bad ? 'bad' : 'ok'}">${this.title}</span><span class="hi">${BR.fmt(S.clock)}</span></div>
         <div class="quote">${BR.esc(this.text)}</div>
@@ -64,7 +66,8 @@
     if ((x = find('miss')) && x.deflected) return { q: 'You shot through a branch. An arrow finds every twig between you and the elk.', skill: 'If there’s brush in the lane, wait one step or move one step.', gear: null };
     if ((x = find('bumped'))) return { q: pick(['Public land. Somebody always walks in.', 'Nothing you did wrong. Somebody else walked in on them.', 'Crowds push elk. The ones that stay are the ones nobody can reach.']), skill: 'Go earlier, go farther, or hunt the pocket nobody wants to climb to.', gear: null };
     if ((x = find('illegal'))) return { q: `${x.reason} That ends the season.`, skill: 'Know exactly what your tag allows before you ever pick up the weapon.', gear: null };
-    if ((x = find('lostday')) && x.reason === 'grizzly') return { q: 'Everybody’s legs quit the first time a grizzly runs at them. You’re alive, and you lost a day.', skill: 'In bear country, make noise in the thick stuff and come into kill sites upwind.', gear: null };
+    if ((x = find('sprayed'))) return { q: 'You sprayed a grizzly, and it worked. Now listen: when that spray wears off, the smell pulls bears in. Do not go back there this season.', skill: 'Never return to the place you sprayed.', gear: 'bearSpray' };
+    if ((x = find('lostday')) && x.reason === 'grizzly') return { q: 'Everybody’s legs quit the first time a grizzly runs at them. You’re alive, and you lost a day.', skill: 'In bear country, make noise in the thick stuff and come into kill sites upwind.', gear: has.bearSpray ? null : 'bearSpray' };
     if ((x = find('lost'))) {
       if (x.weapon === 'rifle' && x.zone === 'shoulder') return { q: `At ${x.range} yards that bullet was carrying ${x.ke} foot-pounds. The shoulder soaked it up.`, skill: 'Get closer, or take the shot behind the shoulder.', gear: BR.rifle().id === '3006' || BR.rifle().id === '65cm' ? 'rifle:7prc' : null };
       if (x.weapon !== 'rifle' && x.zone === 'shoulder' && x.ke < 65) return { q: `The shoulder blade stopped that ${x.gr}-grain arrow. At ${x.ke} foot-pounds you had no margin for a bad angle.`, skill: 'Wait for the near front leg to step forward, or pass on quartering-to shots.', gear: S.bow === 'scout' ? 'bow:talon' : 'fixedBlades' };
@@ -133,7 +136,7 @@
       const [kind, key] = id.includes(':') ? id.split(':') : ['item', id], S = BR.S;
       if (kind === 'bow') { const b = BR.BOWS[key]; return BR.ch().weapon === 'bow' ? { name: `${b.name} · ${b.lb} lb`, price: b.price, owned: S.bow === key } : null; }
       if (kind === 'rifle') { const r = BR.RIFLES[key]; return BR.ch().weapon === 'rifle' ? { name: r.name, price: r.price, owned: S.rifle === key } : null; }
-      const it = BR.ITEMS[key]; if (!it || (it.weapon && it.weapon !== BR.ch().weapon)) return null;
+      const it = BR.ITEMS[key]; if (!it || (it.weapon && it.weapon !== BR.ch().weapon) || (it.bears && !BR.ch().bears)) return null;
       return { name: it.name, price: it.price, owned: !!S.items[key] };
     },
     hud() {
@@ -197,7 +200,7 @@
         rows.push(BR.btn('buy', `${r.name} · $${r.price}`, S.suggest === 'rifle:' + r.id ? 'go' : '', 'rifle:' + r.id, S.cash < r.price, spec));
       });
       Object.entries(BR.ITEMS).forEach(([id, it]) => {
-        if (it.weapon && it.weapon !== weapon) return;
+        if ((it.weapon && it.weapon !== weapon) || (it.bears && !BR.ch().bears)) return;
         rows.push(BR.btn('buy', S.items[id] ? `${it.name} · owned` : `${it.name} · $${it.price}`, S.suggest === id && !S.items[id] ? 'go' : '', id, S.items[id] || S.cash < it.price, it.blurb));
       });
       BR.hud(`

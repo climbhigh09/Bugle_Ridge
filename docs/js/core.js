@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const BR = (window.BR = {});
-  BR.VERSION = '1.1.0';
+  BR.VERSION = '1.2.0';
   window.addEventListener('error', e => console.error('JS error: ' + e.message + ' @' + e.filename + ':' + e.lineno));
   const W = (BR.W = 240), H = (BR.H = 320);
 
@@ -328,12 +328,14 @@
         ${BR.btn('shop', 'Gear & shop', '', null, !ok, ok ? `$${S.cash} to spend` : why)}
         ${BR.btn('help', 'How to play')}
         ${BR.btn('ridge', 'Ridge mode: ' + (S.ridge ? 'ON' : 'off'), '', null, false, 'Dims the screen so your face doesn’t glow on the hill')}
+        ${BR.btn('update', 'Check for updates', '', null, false, `You have v${BR.VERSION}. Only checks when you tap this.`)}
         ${BR.btn('new', 'Start over with a new hunter')}
       </div>`, {
       resume: () => BR.closeOverlay(),
       range: () => BR.go('range', { back: here }),
       shop: () => BR.go('shop', { back: here }),
       help: () => BR.openHelp(),
+      update: () => BR.checkUpdates(),
       ridge: () => { BR.setRidge(!S.ridge); BR.openMenu(); },
       new: () => BR.confirm('Start over?', 'This wipes everything: chapter, cash, gear, and strength.', 'Wipe and start over', () => {
         const ridge = BR.S.ridge; BR.newGame(); BR.S.ridge = ridge; BR.startSeason(0);
@@ -355,6 +357,41 @@
       <p><b>Blood trail.</b> Read the arrow, pick how long to wait, then tap each drop of blood.</p>
     </div>
     ${BR.btn('menu', 'Back to menu')}`, { menu: () => BR.openMenu() });
+
+  // ---------- updates: only when the player asks. The save is never touched. ----------
+  BR.newer = (a, b) => {
+    const p = v => String(v).split('.').map(n => parseInt(n, 10) || 0), x = p(a), y = p(b);
+    for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+    return false;
+  };
+  const updateSheet = (title, body, extra) => BR.showOverlay(
+    `<div class="t hi">${title}</div><div class="tagline">${body}</div>${extra || ''}${BR.btn('close', 'Close')}`,
+    { close: () => BR.closeOverlay(), restart: () => { BR.save(); if (window.Android && window.Android.restart) window.Android.restart(); else location.reload(); } });
+  window.BRUpdateResult = r => {
+    if (!r || r.status === 'error') updateSheet('NO CONNECTION', 'Couldn’t reach GitHub. Try again when you have signal. Nothing changed.');
+    else if (r.status === 'current') updateSheet('UP TO DATE', `You have the latest version, v${BR.VERSION}.`);
+    else updateSheet('UPDATE READY', `v${r.version} is downloaded. Restart to play it. Your hunter and save carry over.`, BR.btn('restart', 'Restart now', 'go'));
+  };
+  BR.checkUpdates = async () => {
+    BR.save();
+    updateSheet('CHECKING…', 'Looking for a newer version on GitHub.');
+    if (window.Android && window.Android.checkUpdate) { window.Android.checkUpdate(BR.VERSION); return; }
+    try {
+      const r = await fetch('version.json?nc=' + Date.now(), { cache: 'no-store' });
+      const v = await r.json();
+      if (!BR.newer(v.version, BR.VERSION)) return window.BRUpdateResult({ status: 'current' });
+      const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        const ctl = await caches.open('bugle-ridge-control');
+        await ctl.put('update-ok', new Response(String(Date.now())));  // lets the new service worker install
+        await reg.update();
+        const w = reg.installing || reg.waiting;
+        if (w && w.state !== 'installed' && w.state !== 'activated') await new Promise((res, rej) => w.addEventListener('statechange', () => { if (w.state === 'installed' || w.state === 'activated') res(); if (w.state === 'redundant') rej(); }));
+        if (reg.waiting) reg.waiting.postMessage('skipWaiting');
+      }
+      window.BRUpdateResult({ status: 'updated', version: v.version });
+    } catch (_) { window.BRUpdateResult({ status: 'error' }); }
+  };
 
   BR.back = () => {
     if (!overlay.hidden) { BR.closeOverlay(); return true; }

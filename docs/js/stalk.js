@@ -271,7 +271,9 @@
       } else st.scent = Math.max(0, st.scent - dt * 0.2);
       st.alert = BR.clamp(st.alert, 0, 100);
       if (ch.pressure && moving && Math.random() < ch.pressure(S.day) * dt * 0.0015) return this.end({ kind: 'bumped' });
-      if (ch.bears && moving && here.cover >= 0.5 && Math.random() < dt * 0.0012 * (this.area.bear ? 2 : 1)) return this.end({ kind: 'charge', where: 'timber' });
+      if (ch.bears && moving && here.cover >= 0.5 && !(S.sprayed && S.sprayed[e.area] === S.day) && Math.random() < dt * 0.0012 * (this.area.bear ? 2 : 1)) {
+        return this.end({ kind: BR.bearCharge(e.area) === 'sprayed' ? 'sprayed' : 'charge', where: 'timber' });
+      }
       if (st.scent >= 1) return this.end({ kind: 'bust', cause: 'scent', thermal: sc.thermal, from: sc.from, yd: Math.round(ld * YD), sun: this.area.sun });
       if (st.alert >= 100) return this.end({ kind: 'bust', cause: st.noiseA > st.moveA ? 'noise' : 'movement', yd: Math.round(ld * YD), terrain: here.name });
       this.flashT -= dt;
@@ -283,7 +285,7 @@
       this.done = true;
       const S = BR.S;
       if (o.kind === 'bust') { S.stats.busts++; BR.vibe(160); }
-      if (o.kind === 'charge') { BR.skipDay('grizzly'); BR.vibe(300); }
+
       BR.log(o.kind, Object.assign({ via: 'stalk' }, o));
       BR.go('outcome', o);
       return false;

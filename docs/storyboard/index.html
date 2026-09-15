@@ -13,7 +13,7 @@
 <header class="masthead">
   <div class="mast-top">
     <div>
-      <div class="eyebrow">Storyboard draft 3 · game v1.1</div>
+      <div class="eyebrow">Storyboard draft 4 · game v1.2</div>
       <h1>Bugle <span>Ridge</span></h1>
     </div>
     <p class="lede">Five seasons and an epilogue. Every chapter adds something new to deal with: wolves, grizzlies, other hunters, and tags that say no. The elk get harder too: they stop answering calls, brush blocks your shots, and bulls walk past on a cow tag.</p>
@@ -68,7 +68,7 @@
         <li>Idle screens still run at 0 fps. Time and frames only run while you’re glassing, stalking or shooting.</li>
         <li>Backgrounds are painted once per scene and cached. Only sprites redraw.</li>
         <li>Mostly near-black at night. <b>Still to come:</b> a sun-glare contrast option for bright days.</li>
-        <li>Updates come from GitHub on launch, with an offline copy for the hill. No other network use.</li>
+        <li>No network use at all unless you tap “Check for updates” in the menu.</li>
       </ul>
     </article>
   </div>
@@ -93,11 +93,11 @@
       <tr><td class="dial">Hank said the same line night after night</td><td><span class="note">jaded</span></td><td>Variants for common lessons, and Hank calls out a repeat instead of reciting it.</td></tr>
       <tr><td class="dial">Sam’s identical call after every restart</td><td><span class="note">jaded</span></td><td>A short, different opener on repeats. The rules still get read.</td></tr>
       <tr><td class="dial">Chapters just switched<small>Hank’s arc lived only in speaker labels.</small></td><td><span class="note">story</span></td><td>One or two lines between chapters: the knee, the radio, the float, the mug, Sam’s call.</td></tr>
-      <tr><td class="dial">Tag soup replays everything from Colorado<small>The biggest source of burnout in the fuzz runs: some careers hit year 13.</small></td><td><span class="note">jaded</span></td><td><b>Your call.</b> Kept as you ruled; see below.</td></tr>
+      <tr><td class="dial">Tag soup replays everything from Colorado<small>The biggest source of burnout in the fuzz runs: some careers hit year 13.</small></td><td><span class="note">jaded</span></td><td><b>1.2:</b> you retry the chapter you failed.</td></tr>
       <tr><td class="dial">Epilogue: “Shoot from here” always too far for Sam<small>Tapping it wasted the hunt.</small></td><td><span class="note">dead end</span></td><td>The button says it’s too far for Sam and stays disabled.</td></tr>
       <tr><td class="dial">Calling screen with nothing to do<small>When calling ended close in, the only exit was the Back button.</small></td><td><span class="note">dead end</span></td><td>Leave always shows once calling is over.</td></tr>
       <tr><td class="dial">Back buttons that did nothing<small>Meat, season end, the found animal.</small></td><td><span class="note">dead end</span></td><td>Removed where there’s nowhere to go back to, or wired to the obvious action.</td></tr>
-      <tr><td class="dial">Updating meant reinstalling</td><td><span class="note">shipping</span></td><td>The app and the web version load the latest from GitHub on launch, and fall back to the offline copy on the hill.</td></tr>
+      <tr><td class="dial">Updating meant reinstalling</td><td><span class="note">shipping</span></td><td><b>1.2:</b> a “Check for updates” button in the menu. Nothing touches the network until you tap it, and the save never moves.</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -210,10 +210,12 @@
     <tbody>
       <tr><td class="dial">Shot an illegal animal<small>wrong sex, sub-legal antlers, wrong zone, after legal light, no tag</small></td><td><span class="pips red"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="note">season over</span></td><td>Tag it, report it, go home.</td></tr>
       <tr><td class="dial">Wounded and lost one<small>any animal you hit and don’t recover</small></td><td><span class="pips"><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="note">1 day</span></td><td>You spend the next day grid-searching for it.</td></tr>
+      <tr><td class="dial">Packing out<small>elk: a day per 5 miles from the truck; moose and grizzly: twice that; anything else: a day</small></td><td><span class="pips"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span><span class="note">1–4 days</span></td><td>Warm days on the mountain spoil more meat.</td></tr>
+      <tr><td class="dial">Bear spray<small>one can turns one charge</small></td><td><span class="note" style="margin-left:0;color:var(--sage)">no lost day</span></td><td>The bear is gone for the day. Go back there after that and the spray draws it in: <b>death</b>.</td></tr>
       <tr><td class="dial">Grizzly false charge<small>Montana and Alaska, near a kill or in thick brush</small></td><td><span class="pips"><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="note">1 day</span></td><td>He stops at 15 yards. You need a day, and clean pants.</td></tr>
       <tr><td class="dial">Dysentery<small>untreated water from a bad source</small></td><td><span class="pips red"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="note">1 in 8 dies</span></td><td>“You have died of dysentery.” New hunter, starter gear. It also finds people at random, everywhere but Alaska.</td></tr>
       <tr><td class="dial">Shot outside legal light<small>half an hour before sunrise to half an hour after sunset; Alaska has none</small></td><td><span class="pips red"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="note">season over</span></td><td>The clock on the screen is the only reminder you get.</td></tr>
-      <tr><td class="dial">Didn’t fill the tag<small>season ends with tag soup</small></td><td><span class="pips blue"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="note">restart</span></td><td>Back to Colorado archery the next September, with your gear and cash.</td></tr>
+      <tr><td class="dial">Didn’t fill the tag<small>season ends with tag soup</small></td><td><span class="pips blue"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="note">restart</span></td><td>Try the same chapter again next season, with your gear and cash.</td></tr>
       <tr><td class="dial">Predator with a tag<small>wolf in ID/MT, grizzly where a tag exists</small></td><td><span class="note" style="margin-left:0;color:var(--sage)">legal</span></td><td>Without the tag it’s an illegal animal, and the season is over.</td></tr>
     </tbody>
   </table></div>
@@ -269,15 +271,15 @@
       <ol class="build">
         <li><div><b>1.0 · The full trail.</b> Colorado archery and rifle, Idaho, Montana, Alaska, and the epilogue, with tags, camp craft, meat and predators.</div></li>
         <li><div><b>1.1 · This review.</b> 240×320 screen, three stalk paces, legal light, hunting pressure, blocked shooting lanes, a rifle range, chapter bridges, less repetition, dead-end fixes, and auto-updates from GitHub.</div></li>
-        <li><div><b>Next.</b> Weather, walk cycles, pack-out days, and a lighter penalty for tag soup (if you want one).</div></li>
+        <li><div><b>1.2 · Your rulings.</b> Retry the failed chapter, pack-out days by distance, bear spray and its catch, manual updates only.</div></li>
+        <li><div><b>Next.</b> Weather and walk cycles.</div></li>
       </ol>
     </div>
     <div>
       <h3 class="sm">Your calls</h3>
       <ul class="q">
-        <li>Tag soup sends you back to Colorado archery. By Montana that means replaying two full seasons after each miss. Keep it, or restart at the chapter you failed?</li>
-        <li>Should pack-outs cost the rest of the day or more? Real hunters lose a day to a bull on their back. Right now filling the tag ends the season immediately.</li>
-        <li>Bear spray: flavor only, or should carrying it shorten the lost day after a false charge?</li>
+        <li>Should Sam also warn you about bear spray’s catch before Montana, or is Hank’s warning after you spray enough?</li>
+        <li>Pack-out days now show up as lost days. Should a long pack-out also raise the odds of a bear finding the meat?</li>
       </ul>
     </div>
   </div>

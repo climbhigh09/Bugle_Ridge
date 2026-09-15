@@ -7,7 +7,7 @@
     Object.assign(S, {
       chapter: idx, day: 1, days: 7, clock: 5.5, part: 'morning', tag: null, events: [], enc: null, over: false, verdict: null,
       camp: null, drank: false, skipDays: 0, lesson: null, lessonDay: 0, seed: (Date.now() % 1000003) | 0,
-      tags: { wolf: false, grizzly: false, grizApplied: false }
+      tags: { wolf: false, grizzly: false, grizApplied: false }, sprayed: {}
     });
     if (ch.weapon === 'rifle' && !S.rifle) S.rifle = '3006';
     BR.go('sam');
@@ -15,6 +15,24 @@
 
   // a lost day is spent at the start of the next morning
   BR.skipDay = reason => { BR.S.skipDays = (BR.S.skipDays || 0) + 1; BR.log('lostday', { reason }); };
+
+  // Pack-outs: a day per 5 miles from the truck for elk, twice that for moose and grizzly, a day for anything else.
+  BR.packDays = (sp, areaId) => {
+    const a = BR.area(areaId), per = Math.max(1, Math.ceil((a ? a.miles : 1) * 1.5 / 5));
+    return sp === 'elk' ? per : sp === 'moose' || sp === 'griz' ? per * 2 : 1;
+  };
+
+  // Grizzly false charge. Spray turns the bear for the day; once it wears off it draws bears, so going back there is fatal.
+  BR.bearCharge = area => {
+    const S = BR.S;
+    S.sprayed = S.sprayed || {};
+    if (S.sprayed[area] === S.day) return 'gone';
+    BR.vibe(300);
+    if (S.items.bearSpray) { delete S.items.bearSpray; S.sprayed[area] = S.day; BR.log('sprayed', { area }); return 'sprayed'; }
+    BR.skipDay('grizzly');
+    return 'charged';
+  };
+  BR.bearTrap = area => { const d = BR.S.sprayed && BR.S.sprayed[area]; return d != null && BR.S.day > d; };
 
   BR.drink = (src, method) => {
     const S = BR.S, ch = BR.ch(), w = BR.WATER[src] || BR.WATER.creek;
@@ -111,12 +129,17 @@
       } else if (m.step === 'hang') {
         BR.hud(`<div class="row"><span class="t">WHERE DOES THE MEAT GO?</span><span class="hi">${METHODS[m.method].name}</span></div>
           <div class="list">${Object.entries(HANGS).map(([k, v]) => BR.btn('hang', v.name, '', k, false, v.blurb)).join('')}</div>`);
+      } else if (m.step === 'spray') {
+        BR.hud(`<div class="row"><span class="t bad">BEAR SPRAY</span><span class="hi">${BR.fmt(S.clock)}</span></div>
+          <div class="quote">${m.text}</div>
+          <div class="tagline">There’s ${m.days - 1} more day${m.days === 2 ? '' : 's'} of meat still up there.</div>
+          <div class="sp"></div>${BR.btn('goback', 'Go back for the rest')}${BR.btn('leaverest', 'Leave the rest on the mountain', 'go')}`);
       } else {
         const base = a.sp === 'moose' ? 550 : a.sex === 'cow' ? 170 : 230, saved = Math.round(base * (1 - m.spoil));
         const load = S.items.framePack ? 100 : 70, trips = Math.max(1, Math.ceil(saved * METHODS[m.method].weight / load));
         BR.hud(`<div class="row"><span class="t ${m.spoil > 0.3 ? 'bad' : 'ok'}">MEAT</span><span class="hi">${saved} lb saved</span></div>
           <div class="quote">${m.text}</div>
-          <div class="row sm"><span class="dim">${trips} trip${trips === 1 ? '' : 's'} on the pack-out</span><span class="dim">${Math.round(m.spoil * 100)}% lost</span></div>
+          <div class="row sm"><span class="dim">${m.truck} mi from the truck · ${m.days} day${m.days === 1 ? '' : 's'} packing · ${trips} trip${trips === 1 ? '' : 's'}</span><span class="dim">${Math.round(m.spoil * 100)}% lost</span></div>
           <div class="sp"></div>${BR.btn('done', 'Pack it out', 'go')}`);
       }
     },
@@ -128,6 +151,9 @@
         const h = HANGS[arg], M = METHODS[m.method];
         let spoil = M.spoil * ch.temp * h.f * (S.items.gameBags ? 0.7 : 1);
         if (ch.wolves || ch.bears) spoil += h.pred;
+        m.days = BR.packDays(an.sp, e.area);
+        m.truck = +(BR.area(e.area).miles * 1.5).toFixed(1);
+        if (m.days > 1) spoil += (m.days - 1) * 0.06 * ch.temp * h.f;
         m.spoil = BR.clamp(spoil, 0, 0.95);
         const lines = [];
         if (m.spoil < 0.1) lines.push('Cool, clean meat. Hank would approve.');
@@ -136,14 +162,28 @@
         else if (h.pred && (ch.wolves || ch.bears)) lines.push('Something got into it overnight.');
         else lines.push('You lost some of it.');
         const bear = (ch.charge || 0) + BR.campData().bear;
-        if (bear && Math.random() < bear) { BR.skipDay('grizzly'); m.charged = true; lines.push('Coming back for the second load, a grizzly false-charged you from 15 yards. You lose tomorrow collecting yourself.'); }
-        m.text = lines.join(' ');
         m.step = 'done';
+        if (bear && Math.random() < bear) {
+          const r = BR.bearCharge(e.area);
+          if (r === 'charged') { m.charged = true; lines.push('Coming back for the second load, a grizzly false-charged you from 15 yards. You lose a day collecting yourself.'); }
+          else if (r === 'sprayed') {
+            lines.push('On the second load a grizzly came at you. You emptied the spray in its face and it turned.');
+            if (m.days > 1) m.step = 'spray';
+          }
+        }
+        m.text = lines.join(' ');
+      } else if (a === 'goback') { BR.save(); BR.go('dead', { cause: 'bear' }); return; }
+      else if (a === 'leaverest') {
+        const kept = 1 / m.days;
+        m.spoil = BR.clamp(1 - (1 - m.spoil) * kept, 0, 1);
+        m.days = 1; m.left = true; m.step = 'done';
+        m.text += ' You left the rest of the meat on the mountain.';
       } else if (a === 'done') {
         const violation = ch.meatOnBone && m.method === 'boned' ? 'The meat has to stay on the bone in this unit. You boned it out.'
           : m.spoil >= 0.6 ? 'Most of the meat spoiled. That’s wanton waste.' : null;
         BR.log('kill', Object.assign({ method: m.method, hang: m.hang, spoil: m.spoil }, e.shotResult));
         S.tag = { sp: an.sp, desc: BR.describe(an), day: S.day, range: e.shotResult.range, area: e.area, spoil: m.spoil };
+        for (let i = 0; i < m.days; i++) BR.skipDay('packout');
         S.over = true;
         if (violation) { S.verdict = { illegal: true, reason: violation }; S.stats.violations++; BR.log('illegal', { reason: violation }); BR.go('outcome', { kind: 'illegal', reason: violation }); return; }
         S.part = 'evening';
@@ -156,7 +196,7 @@
 
   // ---------------- death ----------------
   BR.scenes.dead = {
-    enter() { const S = BR.S; S.stats.seasons++; this.years = S.year; this.hud(); },
+    enter(a) { const S = BR.S; this.cause = (a && a.cause) || 'dysentery'; this.years = S.year; this.hud(); },
     draw(g) {
       BR.campArt(g, 'night');
       R(g, 88, 200, 64, 80, '#6b6f73'); R(g, 93, 195, 54, 10, '#6b6f73'); R(g, 88, 200, 64, 3, '#8a8e92'); R(g, 149, 200, 3, 80, '#4a4e52');
@@ -165,8 +205,8 @@
     },
     hud() {
       BR.hud(`
-        <div class="row"><span class="t bad">YOU HAVE DIED OF DYSENTERY</span><span class="dim">Year ${this.years}</span></div>
-        <div class="quote">Here lies a hunter. Tough on elk, soft on water.</div>
+        <div class="row"><span class="t bad">${this.cause === 'bear' ? 'KILLED BY A GRIZZLY' : 'YOU HAVE DIED OF DYSENTERY'}</span><span class="dim">Year ${this.years}</span></div>
+        <div class="quote">${this.cause === 'bear' ? 'You went back where you sprayed it. Spray that’s worn off draws bears in.' : 'Here lies a hunter. Tough on elk, soft on water.'}</div>
         <div class="tagline">Your gear, cash and progress are gone. A new hunter starts in Colorado.</div>
         <div class="sp"></div>${BR.btn('again', 'Start over', 'go')}`);
     },
@@ -200,7 +240,7 @@
         const v = S.verdict && S.verdict.reason;
         title = v ? 'SEASON OVER' : 'TAG SOUP';
         text = v || `${S.days} days and no animal in the truck.`;
-        next = S.finished ? 'Back to the trail map' : 'Back to Colorado next September';
+        next = S.finished ? 'Back to the trail map' : `Try ${ch.name} again next season`;
       }
       BR.hud(`
         <div class="row"><span class="t ${this.filled ? 'ok' : 'bad'}">${BR.esc(title)}</span><span class="dim">Year ${S.year}</span></div>
@@ -216,7 +256,7 @@
         S.cash += 400;
         if (S.chapter >= BR.CHAPTERS.length - 1) { S.finished = true; BR.go('finale'); }
         else BR.go('bridge', { to: S.chapter + 1 });
-      } else { S.year++; BR.startSeason(0); }
+      } else { S.year++; BR.startSeason(S.chapter); }
     }
   };
 

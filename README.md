@@ -13,14 +13,17 @@ An offline, one-thumb spot-and-stalk elk and moose hunting game for your phone, 
 
 ## Updates
 
-From 1.1 on, both the web version and the Android app load the game from GitHub Pages every time they open with signal, and keep a copy for when you're out of service.
+The game never goes online by itself. To update, open **Menu → Check for updates**. It asks GitHub Pages for `version.json`, downloads a newer build if there is one, and offers a restart. Your hunter and save stay on the phone either way.
+
+To publish an update:
 
 1. Change the game in `www/`.
-2. Run `node tools/build-web.js`. This refreshes `docs/`.
-3. Commit and push to `main`. GitHub Pages redeploys in about a minute.
-4. Close and reopen the game on any phone with signal. The title screen says **Updated to vX.Y.Z**.
+2. Bump the version in `www/js/core.js`, `tools/build-web.js`, and `build.sh`.
+3. Run `node tools/build-web.js`. This refreshes `docs/` and `docs/version.json`.
+4. Commit and push to `main`. GitHub Pages redeploys in about a minute.
+5. On the phone: **Menu → Check for updates → Restart now**.
 
-You only need to reinstall the APK if `android/` changes (the wrapper itself). Saves live on the phone, not in the repo, so updates keep them.
+Reinstall the APK only when `android/` (the wrapper) changes.
 
 ## How a day plays
 
@@ -43,14 +46,16 @@ The practice range (offered before the first season, and any time from the menu 
 - Grandpa Sam tells you the tag rules before each season. Nobody reminds you in the field.
 - Shoot an illegal animal (wrong sex, no brow tines, wrong zone, sub-legal moose, no predator tag, outside legal light) and the season is over.
 - Wound one and lose it, and you spend the next day looking. A grizzly false charge also costs a day.
-- Don't fill your tag and you're back in Colorado next September, with your gear.
+- Don't fill your tag and you retry that chapter next season, with your gear.
+- Packing out takes a day per 5 miles from the truck for elk, twice that for moose or grizzly, and a day for anything else.
+- Bear spray turns a charge and saves the day, but go back to that spot afterward and the worn-off spray draws a bear in. That kills you.
 - Drink untreated water from a bad source and there's a 1-in-8 chance of dysentery. Dysentery kills you and you start over with a new hunter. It can also just find you now and then, anywhere but Alaska.
 - Wolves and grizzlies are legal only with the tag.
 
 ## Built for the hill
 
 - Pixel art on a 240×320 canvas, redrawn only when something changes. Idle screens run at 0 fps, and time only passes while you're glassing or creeping.
-- Mostly near-black palette for OLED screens. Silent, no ads, no tracking. The only network use is fetching game updates from GitHub Pages.
+- Mostly near-black palette for OLED screens. Silent, no ads, no tracking. It uses the network only when you tap Check for updates.
 - Saves on every decision and whenever you leave the app, so you can drop it the second a real elk shows up.
 - Ridge mode dims the app so your face doesn't glow.
 

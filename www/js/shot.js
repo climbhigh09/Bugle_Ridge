@@ -413,7 +413,11 @@
           BR.log('illegal', { reason, desc: BR.describe(res.animal) });
           BR.go('outcome', { kind: 'illegal', reason }); return;
         }
-        if (res.sp === 'wolf' || res.sp === 'griz') { S.stats.predators++; BR.log('predator', { sp: res.sp }); BR.go('outcome', { kind: 'predator', sp: res.sp }); return; }
+        if (res.sp === 'wolf' || res.sp === 'griz') {
+          const days = BR.packDays(res.sp, e.area);
+          for (let i = 0; i < days; i++) BR.skipDay('packout');
+          S.stats.predators++; BR.log('predator', { sp: res.sp, days }); BR.go('outcome', { kind: 'predator', sp: res.sp, days }); return;
+        }
         BR.go('meat'); return;
       }
       BR.draw(); this.hud(); BR.save();
