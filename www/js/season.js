@@ -39,9 +39,11 @@
     if (method === 'tablets') BR.pass(30); else if (method === 'boil') BR.pass(20); else if (method === 'filter') BR.pass(3);
     S.drank = true;
     let risk = method === 'none' ? w.risk : 0;
-    if (ch.dysentery) risk += 1 / 200; // it finds everyone now and then
+    // One trail in ten, dysentery finds you no matter what you drink (rolled at the start; never in Alaska).
+    const d = S.doom, fate = !!d && !S.finished && ch.dysentery && (S.chapter > d.c || (S.chapter === d.c && S.day >= d.d));
     BR.log('water', { src, method });
-    if (Math.random() < risk) { BR.log('dysentery', { src, method }); BR.go('dead', { src, method }); return false; }
+    if (fate || Math.random() < risk) {
+      S.doom = null; BR.log('dysentery', { src, method }); BR.go('dead', { src, method }); return false; }
     BR.save();
     return true;
   };
@@ -51,9 +53,8 @@
     enter() { this.msg = null; this.hud(); },
     draw(g) {
       BR.campArt(g, 'night');
-      BR.sprite(g, BR.HUNT_SIT, BR.HSCOL, 190, 238, 2, true);
-      if (!BR.ch().guide) { R(g, 194, 247, 3, 6, '#1a1a1a'); R(g, 195, 248, 1, 4, '#9fd0e8'); }
-      else BR.sprite(g, BR.MENTOR, BR.MCOL, 96, 222, 2, false);
+      if (BR.ch().guide) BR.fireFolk(g, 'sam');
+      else BR.person(g, 'hunter', 'phone', 210, 277, 1.35, true);
     },
     hud() {
       const S = BR.S, ch = BR.ch(), guide = ch.guide;
@@ -266,7 +267,7 @@
       if (S.finished) { BR.go('finale'); return; }
       if (this.filled) {
         S.cash += 400;
-        if (S.chapter >= BR.CHAPTERS.length - 1) { S.finished = true; BR.go('finale'); }
+        if (S.chapter >= BR.CHAPTERS.length - 1) { S.finished = true; S.nativeOpen = S.oneShot !== false; BR.go('finale'); }
         else BR.go('bridge', { to: S.chapter + 1 });
       } else { S.year++; BR.startSeason(S.chapter); }
     }
@@ -283,7 +284,7 @@
   };
   BR.scenes.bridge = {
     enter(a) { this.to = a && a.to != null ? a.to : BR.S.chapter + 1; this.hud(); },
-    draw(g) { BR.campArt(g, 'evening'); BR.fireFolk(g); },
+    draw(g) { BR.campArt(g, 'evening'); BR.fireFolk(g, this.to >= 5 ? 'sam' : 'hank'); },
     hud() {
       const next = BR.CHAPTERS[this.to];
       BR.hud(`
@@ -298,17 +299,18 @@
     enter() { this.hud(); },
     draw(g) {
       BR.campArt(g, 'night');
-      BR.fireFolk(g);
+      BR.fireFolk(g, 'sam');
     },
     hud() {
-      const S = BR.S, st = S.stats;
+      const S = BR.S, st = S.stats, nat = S.native || {};
       BR.hud(`
         <div class="row"><span class="t hi">THE TRAIL’S DONE</span><span class="dim">Year ${S.year}</span></div>
         <div class="quote">Sam sits by the fire a while with Hank’s old mug and doesn’t say much. “Same time next year,” he says.</div>
         <div class="row sm"><span class="dim">${st.seasons} seasons · ${st.filled} tags filled · ${st.predators} predators · ${st.violations} violations</span></div>
-        <div class="list">${BR.CHAPTERS.map((c, i) => BR.btn('hunt', `${c.name}: ${c.sub}`, '', i)).join('')}</div>`);
+        ${nat.won ? `<div class="row sm"><span class="ok">Grizzly taken with a knife${nat.won > 1 ? ` ×${nat.won}` : ''}</span></div>` : ''}
+        <div class="list">${S.nativeOpen ? BR.btn('native', 'Native mode', 'go', null, false, 'Every tag, first shot. Now try it with a knife.') : ''}${BR.CHAPTERS.map((c, i) => BR.btn('hunt', `${c.name}: ${c.sub}`, '', i)).join('')}</div>`);
     },
-    act(a, arg) { if (a === 'hunt') BR.startSeason(+arg); },
+    act(a, arg) { if (a === 'hunt') BR.startSeason(+arg); else if (a === 'native') BR.go('native'); },
     back() { BR.go('title'); }
   };
 })();

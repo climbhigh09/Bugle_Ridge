@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const BR = (window.BR = {});
-  BR.VERSION = '1.2.2';
+  BR.VERSION = '1.3.0';
   window.addEventListener('error', e => console.error('JS error: ' + e.message + ' @' + e.filename + ':' + e.lineno));
   const W = (BR.W = 240), H = (BR.H = 320);
 
@@ -259,12 +259,19 @@
 
   // ---------- save / platform ----------
   const KEY = 'bugle-ridge-save-v3';
+  // One trail in ten ends in dysentery whatever you drink: pick the season (never Alaska) and the day it strikes.
+  BR.rollDoom = () => {
+    if (Math.random() >= 0.1) return null;
+    const list = BR.CHAPTERS.map((c, i) => (c.dysentery ? i : -1)).filter(i => i >= 0), c = list[(Math.random() * list.length) | 0];
+    return { c, d: c === list[list.length - 1] ? 1 : 1 + ((Math.random() * 3) | 0) };
+  };
   BR.newGame = () => {
     BR.S = {
       v: 3, seed: (Date.now() % 1000003) | 0, year: 1, chapter: 0, day: 1, days: 7, clock: 5.5, part: 'morning',
       cash: 250, bow: 'scout', rifle: null, items: {}, strength: 0, tag: null, tags: { wolf: false, grizzly: false, grizApplied: false },
       camp: null, drank: false, water: null, skipDays: 0, rifleRange: null, samSeen: {}, lastVersion: null, lastLessonQ: null, guideSkill: 0, over: false, verdict: null, finished: false, range: null,
       stats: { busts: 0, shots: 0, wounds: 0, spotted: 0, jobs: 0, seasons: 0, filled: 0, violations: 0, predators: 0 },
+      oneShot: true, nativeOpen: false, native: { tries: 0, won: 0 }, doom: BR.rollDoom(),
       history: [], events: [], lesson: null, lessonDay: 0, suggest: null, enc: null, ridge: false, scene: 'title', sceneArgs: null
     };
   };

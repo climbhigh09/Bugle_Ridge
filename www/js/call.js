@@ -60,7 +60,7 @@
       if (near) this.drawAnimal(g, c);
       R(g, 0, 0, 19, H, '#271e15'); R(g, 16, 0, 3, H, '#45362a'); R(g, 0, 0, 4, H, '#1a130d');
       for (let Y = 5; Y < H; Y += 12) R(g, 5 + (Y % 5), Y, 5, 7, '#1b150f');
-      BR.sprite(g, BR.HUNT, BR.HCOL, 16, 262, 4, false);
+      BR.person(g, 'hunter', BR.ch().weapon === 'bow' ? 'bow' : 'rifle', 34, 303, 1.1);
       for (let j = 0; j < 27; j++) R(g, 19, j, 40 - j * 1.5, 1, '#0a110c');
     },
     drawAnimal(g, c) {

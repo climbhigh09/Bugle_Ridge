@@ -69,9 +69,11 @@
     g.drawImage(artCache[key], 0, 0);
     if (part !== 'midday') { BR.flame(g, 165, 266); BR.flame(g, 161, 268); }
   };
-  BR.fireFolk = g => { // Hank on his log, the hunter across the fire
-    BR.sprite(g, BR.MENTOR, BR.MCOL, 96, 222, 2, false);
-    BR.sprite(g, BR.HUNT_SIT, BR.HSCOL, 190, 238, 2, true);
+  // Hank (or Sam, once Hank's gone) on his log, the hunter across the fire
+  BR.elder = () => (BR.S && (BR.S.finished || BR.ch().guide) ? 'sam' : 'hank');
+  BR.fireFolk = (g, elder, pose) => {
+    BR.person(g, elder || BR.elder(), 'sit', 112, 275, 1.35);
+    BR.person(g, 'hunter', pose || 'sit', 210, 277, 1.35, true);
   };
 
   BR.endHunt = () => {

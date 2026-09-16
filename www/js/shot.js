@@ -194,7 +194,7 @@
     resolve() {
       const r = BR.S.enc.shotResult;
       this.phase = 'done';
-      if (r.zone === 'miss') { BR.log('miss', r); BR.go('outcome', { kind: 'miss', high: r.high, range: r.range, weapon: r.weapon, deflected: r.deflected }); }
+      if (r.zone === 'miss') { BR.S.oneShot = false; BR.log('miss', r); BR.go('outcome', { kind: 'miss', high: r.high, range: r.range, weapon: r.weapon, deflected: r.deflected }); }
       else BR.go('recover');
     },
     finish(o) {
@@ -409,7 +409,7 @@
         const reason = BR.legal(res.animal, res.clock);
         BR.log('recovered', Object.assign({ waited: rec.waited, pushed: rec.pushed }, res));
         if (reason) {
-          S.verdict = { illegal: true, reason }; S.over = true; S.stats.violations++;
+          S.verdict = { illegal: true, reason }; S.over = true; S.stats.violations++; S.oneShot = false;
           BR.log('illegal', { reason, desc: BR.describe(res.animal) });
           BR.go('outcome', { kind: 'illegal', reason }); return;
         }
@@ -424,7 +424,7 @@
     },
     lose() {
       const S = BR.S, e = S.enc, rec = e.rec;
-      S.stats.wounds++;
+      S.stats.wounds++; S.oneShot = false;
       BR.skipDay('searching');
       BR.log('lost', Object.assign({ waited: rec.waited, need: rec.m.need, pushed: !!rec.pushed }, e.shotResult));
       BR.go('outcome', { kind: 'lost', zone: e.shotResult.zone });

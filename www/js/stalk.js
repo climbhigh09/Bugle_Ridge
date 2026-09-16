@@ -14,7 +14,9 @@
   const PACE = { hike: 20, sneak: 8, creep: 3.5 };
   const paceFor = (dist, ter) => (dist > 50 && (ter.cover >= 0.5 || dist > ter.sight) ? 'hike' : dist > 20 ? 'sneak' : 'creep');
   BR.stalkPace = paceFor;
-  BR.maxShot = () => (BR.ch().weapon === 'bow' ? 80 : 600);
+  const native = () => !!(BR.S.enc && BR.S.enc.native);
+  const windChecker = () => !!BR.S.items.windChecker && !native();  // native mode leaves the gear at camp
+  BR.maxShot = () => (native() ? BR.KNIFE_YD : BR.ch().weapon === 'bow' ? 80 : 600);
 
   function quantile(arr, q) { const s = arr.slice().sort((a, b) => a - b); return s[BR.clamp(Math.floor(q * s.length), 0, s.length - 1)]; }
   function genMap(area, seed, elkC) {
@@ -150,7 +152,7 @@
       for (let s = 0; s < pts.length - 1; s++) BR.line(g, pts[s].x, pts[s].y, pts[s + 1].x, pts[s + 1].y, P.amber, 3);
       e.route.forEach(p => { R(g, p.x - 1, p.y - 1, 3, 3, P.bone); R(g, p.x, p.y, 1, 1, P.ink); });
       R(g, START.x - 2, START.y - 2, 5, 5, P.amber); R(g, START.x - 1, START.y - 1, 3, 3, '#2a2213');
-      if (S.items.windChecker) {
+      if (windChecker()) {
         const st = routeStats(this.m.grid, this.area, e, S.clock), sc = BR.scent(this.area, st.arrive), last = pts[pts.length - 1];
         BR.line(g, last.x, last.y, last.x + sc.x * 40, last.y + sc.y * 40, P.wind, 2);
         windBox(g, sc, P.wind);
@@ -163,7 +165,7 @@
       BR.draw(); this.hud(); BR.save();
     },
     hud() {
-      const S = BR.S, e = S.enc, has = !!S.items.windChecker, st = routeStats(this.m.grid, this.area, e, S.clock), c = BR.conditions();
+      const S = BR.S, e = S.enc, has = windChecker(), st = routeStats(this.m.grid, this.area, e, S.clock), c = BR.conditions();
       const noiseBars = Math.round(BR.clamp(st.noise, 0, 1.25) * 4), has1 = e.route.length > 0;
       const scent = has ? (st.scentAt > 0 ? `<span class="bad">Scent reaches them near waypoint ${st.scentAt}</span>` : '<span class="ok">Scent stays clear of them</span>')
         : `<span class="dim">Wind from ${c.from} ${c.mph} · sun on slope ${BR.fmt(this.area.sun)}</span>`;
@@ -174,15 +176,15 @@
         <div class="row sm">${scent}</div>
         <div class="sp"></div>
         ${BR.btn('go', 'Start stalk', 'go', null, !has1)}
-        <div class="g2">${BR.btn('clear', 'Clear route', '', null, !has1)}${BR.btn('leave', 'Back to camp', '')}</div>`);
+        <div class="g2">${BR.btn('clear', 'Clear route', '', null, !has1)}${BR.btn('leave', e.native ? 'Back to the fire' : 'Back to camp', '')}</div>`);
     },
     act(a) {
       const e = BR.S.enc;
       if (a === 'go') { e.st = null; BR.go('stalk'); }
       else if (a === 'clear') { e.route = []; BR.draw(); this.hud(); }
-      else if (a === 'leave') BR.endHunt();
+      else if (a === 'leave') { if (e.native) BR.go('native'); else BR.endHunt(); }
     },
-    back() { BR.go('glass'); }
+    back() { BR.go(BR.S.enc.native ? 'native' : 'glass'); }
   };
 
   // ---------------- STALK ----------------
@@ -229,7 +231,7 @@
       if (this.holding) {
         let target = null;
         if (st.seg < route.length - 1) target = route[st.seg + 1];
-        else { const n = this.nearest(); if (n && n.px > 10) target = n.k; }
+        else { const n = this.nearest(); if (n && n.px > (e.native ? 2.6 : 10)) target = n.k; }
         if (target) {
           const dx = target.x - st.hx, dy = target.y - st.hy, L = Math.hypot(dx, dy);
           const step = PACE[this.pace] * here.speed * dt;
@@ -251,6 +253,7 @@
       if (st.lookT <= 0) {
         st.look = !st.look;
         st.lookT = st.look ? 1.5 + Math.random() * 2 + st.alert / 40 : Math.max(1.2, 3 + Math.random() * 5 - st.alert / 30);
+        if (e.native) st.lookT *= st.look ? 1.3 : 0.6;  // a grizzly checks around more than a feeding elk
         if (st.look && ld < here.sight) BR.vibe(st.alert > 40 ? 45 : 20);
       }
       if (st.look && ld < here.sight) {
@@ -259,19 +262,19 @@
         else if (here.cover < 0.5 && close > 0.5) st.alert += 4 * dt;
         else st.alert -= 3 * dt;
       } else st.alert -= 6 * dt;
-      if (moving && ld < 100 && Math.random() < here.noise * 0.28 * dt * pf) {
+      if (moving && ld < 100 && Math.random() < here.noise * (e.native ? 0.26 : 0.28) * dt * pf) {
         const add = ld < 40 ? 30 : ld < 70 ? 18 : 8;
         st.alert += add; st.noiseA += add;
-        this.flash(here.name === 'deadfall' ? 'Stick snapped!' : here.name === 'shale' ? 'Rocks clattered!' : 'Brush scraped your pack.');
+        this.flash(here.name === 'deadfall' ? 'Stick snapped!' : here.name === 'shale' ? 'Rocks clattered!' : e.native ? 'Brush scraped your bare legs.' : 'Brush scraped your pack.');
       }
       const sc = BR.scent(this.area, clock), dot = (sc.x * ldx + sc.y * ldy) / ld;
       if (ld < 83 && dot > 0.72) {
-        st.scent += dt * (dot - 0.72) * 6 * (1.3 - ld / 83);
+        st.scent += dt * (dot - 0.72) * 6 * (1.3 - ld / 83) * (e.native ? 2.4 : 1);
         if (st.scent > 0.25 && !st.warned) { st.warned = true; this.flash('A nose is up. The wind’s wrong.'); BR.vibe(30); }
       } else st.scent = Math.max(0, st.scent - dt * 0.2);
       st.alert = BR.clamp(st.alert, 0, 100);
-      if (ch.pressure && moving && Math.random() < ch.pressure(S.day) * dt * 0.0015) return this.end({ kind: 'bumped' });
-      if (ch.bears && moving && here.cover >= 0.5 && !(S.sprayed && S.sprayed[e.area] === S.day) && Math.random() < dt * 0.0012 * (this.area.bear ? 2 : 1)) {
+      if (!e.native && ch.pressure && moving && Math.random() < ch.pressure(S.day) * dt * 0.0015) return this.end({ kind: 'bumped' });
+      if (!e.native && ch.bears && moving && here.cover >= 0.5 && !(S.sprayed && S.sprayed[e.area] === S.day) && Math.random() < dt * 0.0012 * (this.area.bear ? 2 : 1)) {
         return this.end({ kind: BR.bearCharge(e.area) === 'sprayed' ? 'sprayed' : 'charge', where: 'timber' });
       }
       if (st.scent >= 1) return this.end({ kind: 'bust', cause: 'scent', thermal: sc.thermal, from: sc.from, yd: Math.round(ld * YD), sun: this.area.sun });
@@ -284,8 +287,8 @@
     end(o) {
       this.done = true;
       const S = BR.S;
+      if (S.enc.native) { BR.vibe(o.kind === 'bust' ? 300 : 40); BR.go('nativeEnd', o); return false; }
       if (o.kind === 'bust') { S.stats.busts++; BR.vibe(160); }
-
       BR.log(o.kind, Object.assign({ via: 'stalk' }, o));
       BR.go('outcome', o);
       return false;
@@ -311,17 +314,18 @@
       }
       const [hx, hy] = T(st.hx, st.hy);
       if (z > 1) BR.ring(g, hx, hy, (Math.min(BR.maxShot(), 80) / YD) * z, 'rgba(227,166,70,.35)', 6);
-      if (S.items.windChecker) { const sc = BR.scent(this.area, S.clock); BR.line(g, hx, hy, hx + sc.x * 30 * z, hy + sc.y * 30 * z, P.wind, 3); }
+      if (windChecker()) { const sc = BR.scent(this.area, S.clock); BR.line(g, hx, hy, hx + sc.x * 30 * z, hy + sc.y * 30 * z, P.wind, 3); }
       R(g, hx - 2 * z, hy - 2 * z, 5 * z, 5 * z, P.ink); R(g, hx - z, hy - z, 3 * z, 3 * z, P.amber); R(g, hx, hy, z, z, P.ink);
     },
     hud() {
       BR.hud(`
         <div class="row"><span class="t" id="st-mode">STALKING</span><span class="hi" id="st-yd"></span></div>
-        <div class="row"><span>LEAD ANIMAL</span><span id="st-meter"></span></div>
+        <div class="row"><span>${native() ? 'GRIZZLY' : 'LEAD ANIMAL'}</span><span id="st-meter"></span></div>
         <div class="row sm"><span id="st-msg"></span><span class="dim" id="st-clock"></span></div>
-        ${BR.S.items.windChecker ? '<div class="row sm"><span>Scent: <span id="st-scent"></span></span></div>' : ''}
+        ${windChecker() ? '<div class="row sm"><span>Scent: <span id="st-scent"></span></span></div>' : ''}
         <div class="sp"></div>
-        <div class="g2"><button class="btn go" id="st-shoot" data-act="shoot" disabled>Shoot</button><button class="btn" data-act="call">Call from here</button></div>
+        ${native() ? `<button class="btn go" id="st-shoot" data-act="shoot" disabled>Knife · get to ${BR.KNIFE_YD} yd</button>`
+          : '<div class="g2"><button class="btn go" id="st-shoot" data-act="shoot" disabled>Shoot</button><button class="btn" data-act="call">Call from here</button></div>'}
         ${BR.holdBtn('creep', 'HOLD TO CREEP · LIFT TO FREEZE')}`);
       this.upd();
     },
@@ -349,11 +353,15 @@
       }
       const b = $('st-shoot'), inRange = n.yd <= BR.maxShot();
       b.disabled = !inRange;
-      b.textContent = inRange ? `Shoot · ${n.yd} yd` : 'Shoot';
+      b.textContent = native() ? (inRange ? `Take him · ${n.yd} yd` : `Knife · get to ${BR.KNIFE_YD} yd`) : inRange ? `Shoot · ${n.yd} yd` : 'Shoot';
     },
     act(a) {
       const S = BR.S, e = S.enc, st = e.st, zx = e.target.zoneX;
-      if (a === 'shoot') {
+      if (a === 'shoot' && e.native) {
+        const n = this.nearest();
+        if (!n || n.yd > BR.KNIFE_YD) return;
+        this.done = true; BR.go('nativeEnd', { kind: 'won', yd: n.yd });
+      } else if (a === 'shoot') {
         const r = Math.random;
         const opts = e.elk.filter(k => !k.gone).map(k => ({ k, yd: Math.round(Math.hypot(k.x - st.hx, k.y - st.hy) * YD) })).filter(o => o.yd <= BR.maxShot()).sort((p, q) => p.yd - q.yd);
         if (!opts.length) return;
@@ -366,6 +374,10 @@
         BR.go('call', { area: e.area, dist: n ? n.yd : 150, bull: e.elk.some(k => k.a.sex === 'bull' && !k.gone), fromStalk: true });
       }
     },
-    back() { this.holding = false; BR.confirm('Back out of this stalk?', 'You slip away without spooking them, but this hunt is over.', 'Back out', () => BR.endHunt()); }
+    back() {
+      this.holding = false;
+      if (BR.S.enc.native) { BR.confirm('Back out?', 'Walk home barefoot. The bear never knows.', 'Back out', () => { this.done = true; BR.go('nativeEnd', { kind: 'left' }); }); return; }
+      BR.confirm('Back out of this stalk?', 'You slip away without spooking them, but this hunt is over.', 'Back out', () => BR.endHunt());
+    }
   };
 })();

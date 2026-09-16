@@ -49,7 +49,7 @@ The practice range (offered before the first season, and any time from the menu 
 - Don't fill your tag and you retry that chapter next season, with your gear.
 - Packing out takes a day per 5 miles from the truck for elk, twice that for moose or grizzly, and a day for anything else.
 - Bear spray turns a charge and saves the day, but go back to that spot afterward and the worn-off spray draws a bear in. That kills you.
-- Drink untreated water from a bad source and there's a 1-in-8 chance of dysentery. Dysentery kills you and you start over with a new hunter. It can also just find you now and then, anywhere but Alaska.
+- Drink untreated water from a bad source and there's a 1-in-8 chance of dysentery. Dysentery kills you and you start over with a new hunter. Separately, one trail in ten ends in dysentery no matter what you drink (never in Alaska).
 - Wolves and grizzlies are legal only with the tag.
 
 ## Built for the hill

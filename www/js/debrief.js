@@ -44,7 +44,7 @@
         const spr = BR.SPR.get(an, 'walk', 0.4, { flip: true });
         for (let i = 0; i < 3; i++) BR.SPR.draw(g, spr, 67 + i * 48, 195 - (i % 2) * 5);
       }
-      BR.sprite(g, BR.HUNT, BR.HCOL, 27, 266, 4, false);
+      BR.person(g, 'hunter', BR.ch().weapon === 'bow' ? 'bow' : 'rifle', 46, 307, 1.1);
     },
     hud() {
       const S = BR.S, bad = !['passed', 'predator', 'sprayed'].includes(this.o.kind);

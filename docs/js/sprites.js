@@ -47,6 +47,8 @@
     claw: { g: 'x', r: ['#e8dcc0'] }
   });
   const NAMES = Object.keys(PAL), IDX = Object.fromEntries(NAMES.map((n, i) => [n, i]));
+  // later files (people.js) add their own colours
+  A.addPal = o => Object.entries(o).forEach(([k, v]) => { if (IDX[k] == null) { IDX[k] = NAMES.length; NAMES.push(k); } PAL[k] = v; });
   const HEX = {};
   const rgb = h => HEX[h] || (HEX[h] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)));
 
