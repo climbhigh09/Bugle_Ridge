@@ -150,7 +150,7 @@
     hud() {
       const S = BR.S, ch = BR.ch(), c = BR.conditions(), part = S.part, cp = BR.campData();
       const head = `
-        <div class="row"><span class="t">${part === 'midday' ? 'MIDDAY' : ch.name.toUpperCase()} · DAY ${S.day}/${S.days}</span><span class="hi">${BR.fmt(S.clock)}</span></div>
+        <div class="row"><span class="t">${part === 'midday' ? 'MIDDAY' : ch.name.toUpperCase()} · ${c.date} · DAY ${S.day}/${S.days}</span><span class="hi">${BR.fmt(S.clock)}</span></div>
         <div class="row sm"><span><span class="hi">${c.rut}</span> · ${c.sky}</span><span class="dim">$${S.cash}</span></div>`;
       if (part === 'morning' && !S.drank) {
         if (!this.src) {
@@ -181,16 +181,24 @@
           </div>${water}`);
         return;
       }
-      const thermal = part === 'morning' ? 'Thermals downhill until the sun hits' : 'Thermals uphill until ~6:20 PM';
+      const thermal = part === 'morning' ? 'Thermals downhill until the sun hits, then up' : `Thermals swirl until 4:30, then up, then drain downhill from ${BR.fmt(BR.drainAt())}`;
       const howl = c.howl && part === 'morning' ? `<div class="row sm"><span class="bad">Wolves howled toward the ${BR.area(c.howl).name.toLowerCase()} at first light.</span></div>` : '';
-      const areas = ch.areas.map(a => BR.btn('area', a.name, '', a.id, false,
-        `${(a.miles * cp.hike).toFixed(1)} mi · ${a.callOnly ? 'calling' : 'glassing'}${part === 'morning' ? ' · sun on slope ' + BR.fmt(a.sun) : ''}`)).join('');
+      const legs = ch.guide ? BR.samLegs() : null;
+      const areas = ch.areas.map(a => {
+        // Sam will push past his legs once (up to 1.5 mi), and pays for it tomorrow
+        const rt = a.miles * cp.hike * 2, tired = ch.guide && rt > legs + 1.55, push = ch.guide && !tired && rt > legs + 0.05;
+        return BR.btn('area', a.name, '', a.id, tired,
+          tired ? `${rt.toFixed(1)} mi round trip · Sam’s legs won’t do it today`
+            : `${(a.miles * cp.hike).toFixed(1)} mi${ch.guide ? (push ? ' · pushes Sam, a shorter day tomorrow' : '') : ' · ' + (a.callOnly ? 'calling' : 'glassing')}${part === 'morning' ? ' · sun on slope ' + BR.fmt(a.sun) : ''}`);
+      }).join('');
+      const samLine = ch.guide ? `<div class="quote">${BR.esc(part === 'morning' ? ch.days[(S.day - 1) % ch.days.length] : 'Sam’s rested. “One more sit before dark.”')}</div>
+        <div class="row sm"><span class="dim">Sam’s legs today</span><span class="hi">${legs.toFixed(1)} mi left</span></div>` : '';
       const glassArea = ch.areas.find(a => !a.callOnly);
       const job = ch.guide ? '' : part === 'morning'
         ? BR.btn('job', 'Scout for an outfitter', '', glassArea.id, false, '$60 per bull you find · uses the morning')
         : BR.btn('pack', 'Pack out a client’s animal', '', null, false, '$180 · uses the evening');
       BR.hud(head + `
-        <div class="row sm"><span>Wind from <span class="ok">${c.from} ${c.mph} mph</span> · ${thermal.toLowerCase()}</span></div>${howl}
+        ${samLine}<div class="row sm"><span>Wind from <span class="ok">${c.from} ${c.mph} mph</span> · ${thermal.toLowerCase()}</span></div>${howl}
         <div class="list">${areas}${job}</div>${water}`);
     },
     act(a, arg) {
@@ -203,6 +211,7 @@
         const area = BR.area(arg), c = BR.conditions();
         BR.pass(area.miles * 25 * cp.hike);
         S.enc = { area: arg, spooked: Math.random() < cp.spook, howled: c.howl === arg && S.part === 'morning' };
+        if (BR.ch().guide) { BR.useLegs(area.miles * cp.hike * 2); BR.go('locate', { area: arg }); return; }
         BR.go(area.callOnly ? 'call' : 'glass', { area: arg, blind: area.callOnly });
       } else if (a === 'job') {
         BR.pass(20);

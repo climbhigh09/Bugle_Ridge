@@ -1,6 +1,6 @@
 {
-  "version": "1.3.0",
-  "build": "202609161420",
+  "version": "1.4.0",
+  "build": "202610030346",
   "files": [
     "index.html",
     "style.css",
@@ -17,6 +17,7 @@
     "js/shot.js",
     "js/range.js",
     "js/debrief.js",
-    "js/native.js"
+    "js/native.js",
+    "js/guide.js"
   ]
 }

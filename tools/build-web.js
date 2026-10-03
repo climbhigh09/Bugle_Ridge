@@ -6,8 +6,8 @@
 const fs = require('fs'), path = require('path'), zlib = require('zlib'), { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..'), WWW = path.join(ROOT, 'www'), DIST = path.join(ROOT, 'dist'), WEB = path.join(DIST, 'web');
-const SCRIPTS = ['core', 'data', 'sprites', 'animals', 'people', 'season', 'camp', 'glass', 'stalk', 'call', 'shot', 'range', 'debrief', 'native'].map(n => `js/${n}.js`);
-const VERSION = '1.3.0';
+const SCRIPTS = ['core', 'data', 'sprites', 'animals', 'people', 'season', 'camp', 'glass', 'stalk', 'call', 'shot', 'range', 'debrief', 'native', 'guide'].map(n => `js/${n}.js`);
+const VERSION = '1.4.0';
 const BUILD = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
 
 // ---------- icons: rasterise android/res/drawable/icon.xml (24×24 pixel art) to PNG ----------

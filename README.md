@@ -2,7 +2,7 @@
 
 An offline, one-thumb spot-and-stalk elk and moose hunting game for your phone, built for playing on a hillside while you wait for a real elk to step out.
 
-**Five seasons and an epilogue:** Colorado archery in the September rut, Colorado 2nd rifle on a cow tag, Idaho wolf country, Montana public land with grizzlies, an Alaska moose float hunt, and one more season with Grandpa Sam. Glass the hillside, plan a stalk against the wind and thermals, creep past the lead cow or call one in, make the shot, follow the blood trail, take care of the meat, and hear from Hank about what went wrong.
+**Five seasons and an epilogue:** Colorado archery in the September rut, Colorado 2nd rifle on a cow tag, Idaho wolf country, Montana public land with grizzlies, an Alaska moose float hunt, and an epilogue, Calling for Sam: a September archery season where you call elk and Grandpa Sam carries the bow. Glass the hillside, plan a stalk against the wind and thermals, creep past the lead cow or call one in, make the shot, follow the blood trail, take care of the meat, and hear from Hank about what went wrong.
 
 ## Play it
 
@@ -51,6 +51,18 @@ The practice range (offered before the first season, and any time from the menu 
 - Bear spray turns a charge and saves the day, but go back to that spot afterward and the worn-off spray draws a bear in. That kills you.
 - Drink untreated water from a bad source and there's a 1-in-8 chance of dysentery. Dysentery kills you and you start over with a new hunter. Separately, one trail in ten ends in dysentery no matter what you drink (never in Alaska).
 - Wolves and grizzlies are legal only with the tag.
+- Every day has a real date, and the elk rut follows it: pre-rut, building, peak (Sept 17–27), post-rut, a second rut while unbred cows recycle, then late season.
+- Thermals run downhill at dawn, uphill once the sun hits, swirl in the mid-afternoon heat, and drain downhill again about an hour before sunset.
+
+## Calling for Sam
+
+The epilogue unlocks once you fill the Alaska tag. Sam shoots his old recurve to 35 yards, can walk about 3 miles a day, and holds full draw about 30 seconds.
+
+- Locate a bull with one location bugle, then close in quietly.
+- On the setup map, place Sam, then yourself. Only the wind is shown. Bulls come to the sound and swing downwind of it before they commit, so Sam belongs ahead of you, in front of cover, where that swing brings the bull past him. Sit crosswind of the bull so neither the bull nor his cows walk down your scent.
+- Call him in. If he hangs up, back off while calling, go silent, rake, or slip closer.
+- When he's close, signal Sam to draw while the bull's head is down or behind cover. Mew to stop him. Sam takes the shot; a walking bull gets hit back.
+- At the fire you tell Sam the one thing he needs to hear, and he tells you what you did.
 
 ## Built for the hill
 

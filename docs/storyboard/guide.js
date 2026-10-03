@@ -69,12 +69,6 @@
       const B = [104, 70], S = [150, 160], C = [118, 246];
       R(g, B[0] - 4, B[1] - 2, 8, 4, '#a3743f'); R(g, B[0] + 3, B[1] - 4, 2, 3, '#4d3423'); R(g, B[0] + 3, B[1] - 7, 1, 3, '#ddd0b3'); R(g, B[0] + 5, B[1] - 7, 1, 3, '#ddd0b3');
       tag(g, B[0] - 22, B[1] - 10, 'BULL', '#e3a646');
-      let px = B[0], py = B[1];
-      for (let t = 0; t <= 1.001; t += 0.02) {
-        const x = B[0] + (C[0] - B[0]) * t + Math.sin(t * Math.PI) * 52, y = B[1] + (C[1] - B[1]) * t;
-        if (Math.round(t * 50) % 3 !== 2) R(g, x, y, 2, 2, '#e3a646');
-        px = x; py = y;
-      }
       // Sam: in front of the tree, 35-yd ring
       for (let a = 0; a < 360; a += 5) { const t = a * Math.PI / 180; R(g, S[0] + Math.cos(t) * 23, S[1] + Math.sin(t) * 23, 1, 1, 'rgba(235,226,207,.7)'); }
       [[-20, -30], [10, -34], [24, -6]].forEach(([dx, dy]) => dashed(g, S[0], S[1], S[0] + dx, S[1] + dy, '#ebe2cf'));
@@ -82,8 +76,8 @@
       R(g, C[0] - 3, C[1] - 3, 7, 7, '#07080b'); R(g, C[0] - 2, C[1] - 2, 5, 5, '#e3a646'); tag(g, C[0] - 30, C[1] + 3, 'YOU', '#e3a646');
       dashed(g, S[0], S[1] + 4, C[0] + 2, C[1] - 4, '#9c978b'); tag(g, 140, 210, '60 YD', '#9c978b');
       label(g, 8, 8, 'PLACE SAM, THEN YOURSELF');
-      R(g, 6, 266, 170, 48, 'rgba(7,8,11,.84)');
-      ['✓ 40–80 yd ahead of you', '✓ on his downwind swing', '✓ in front of cover', '✓ lanes inside 35 yd'].forEach((t, i) => tag(g, 12, 278 + i * 10, t, '#93a67a'));
+      R(g, 6, 284, 170, 30, 'rgba(7,8,11,.84)');
+      tag(g, 12, 296, 'ONLY THE WIND IS SHOWN.', '#93a67a'); tag(g, 12, 307, 'READ HIS SWING YOURSELF.', '#93a67a');
     },
     // 3. Calling: the bull comes to your sound and walks past Sam
     g3(g) {
@@ -121,7 +115,7 @@
       person(g, 'sam', 'draw', 52, 290, 1.35, false);
       label(g, 8, 8, 'HIS EYES ARE BEHIND THE TREE');
       label(g, 8, 24, 'SIGNAL: DRAW NOW', '#93a67a');
-      label(g, 8, 296, 'SAM CAN HOLD ≈5 S. YOU HAVE ≈8.', '#7fa3c4');
+      label(g, 8, 296, 'SAM CAN HOLD ≈30 S. SHAKY PAST 20.', '#7fa3c4');
     },
     // 6. Cow parade: cows first, don't draw
     g6(g) {
@@ -172,10 +166,10 @@
 
   const BEATS = [
     ['g1', 'Locate', 'Before light, you blow one location bugle from the ridge. A bull answers. You close to about 100 yards of him without calling again.', 'Bugling every hundred yards on the way in is how hunters bump bulls.'],
-    ['g2', 'Set up', 'A top-down map: the bull’s last spot, the wind, the cover. Tap where Sam sits, then where you call from.', 'Scored on four checks: 40–80 yd ahead of you, on his downwind swing, in front of cover, and open lanes inside 35 yd.'],
+    ['g2', 'Set up', 'A top-down map: the bull’s last spot, the wind, the cover. Tap where Sam sits, then where you call from.', 'Only the wind is shown. Get it right: Sam 40–80 yd ahead of you, on the side the bull swings to, in front of cover, with lanes inside 35 yd. Sam tells you at the fire what you got wrong.'],
     ['g3', 'Call', 'You call from behind Sam. The bull walks to your sound, so his path crosses Sam’s lanes if you placed Sam right.', 'Cow mew, estrus whine, location or challenge bugle, rake, go silent, back away calling.'],
     ['g4', 'The hang-up', 'He stops at 80 yards because he can’t see a cow where the sound is.', 'Back away while calling and pull him through Sam’s lane, go quiet for 20 minutes, slip closer, or rake.'],
-    ['g5', 'Draw timing', 'You signal the draw. Signal it while his eyes are behind a tree.', 'Signal while he’s looking and he busts. Signal too early and Sam shakes, then lets down.'],
+    ['g5', 'Draw timing', 'You signal the draw. Signal it while his eyes are behind a tree.', 'Signal while he’s looking and he busts. Signal too early and Sam shakes past 20 seconds, then lets down at 30.'],
     ['g6', 'Cow parade', 'The cows come first and walk past Sam at 20 yards. The bull hangs back at 45.', 'Any draw now gets seen. Wait for the bull.'],
     ['g7', 'Sam’s shot', 'The shot is Sam’s, seen over his shoulder. You mew to stop the bull and Sam releases.', 'Range, angle, stopped or walking, Sam’s nerves and Sam’s skill decide the hit. A walking bull gets hit back.'],
     ['g8', 'After the shot', 'How the bull ran tells you about the hit. You decide how long to wait.', 'Lungs: 30 minutes. Liver: 4 hours. Gut: 6 or more. Push him early and you may not find him.'],
@@ -186,7 +180,7 @@
     ['Range', '35 yards with his old recurve. He passes on anything farther, and says so.'],
     ['Legs', 'About 3 miles a day. A long walk today means a short one tomorrow.'],
     ['Nerves', 'Climb as a bull closes. A bugling bull shakes him more than a quiet cow.'],
-    ['Hold', 'About 5 seconds at full draw. You can hold about 8.'],
+    ['Hold', 'About 30 seconds at full draw. Past 20 he starts to shake.'],
     ['Skill', 'Every right lesson at the fire steadies him. A wrong one doesn’t.'],
     ['Eyes', 'Good. He spots blood you’d walk past, and he never shoots something illegal.']
   ];

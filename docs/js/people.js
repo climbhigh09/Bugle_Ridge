@@ -42,7 +42,9 @@
     phone: { g: 'x', r: ['#141618'] },
     glow: { g: 'x', r: ['#9fd0e8'] },
     lens: { g: 'x', r: ['#8e9496'] },
-    lip: { g: 'x', r: ['#6e4032'] }
+    lip: { g: 'x', r: ['#6e4032'] },
+    samCap: { g: 'b', r: ['#a8645a', '#884c42', '#683830', '#44241e'] },
+    shaft: { g: 'x', r: ['#c9b48c'] }
   });
 
   const poly = (g, pts) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); };
@@ -67,7 +69,7 @@
       add('band', g => g.fillRect(hx - 3.7, hy - 6.4, 9, 1.4));
     } else if (who === 'sam') {
       add('grey', g => { ell(g, hx - 3.3, hy - 0.2, 1.6, 2.6); ell(g, hx + 3.6, hy + 2.2, 1.9, 0.8); poly(g, [[hx - 1.5, hy + 2], [hx + 4.4, hy + 3], [hx + 3.4, hy + 5.8], [hx - 0.5, hy + 5.4]]); });
-      add('blaze', g => { dome(g, hx - 0.3, hy - 3.2, 4.6, 3.6); g.fillRect(hx - 4.8, hy - 4.2, 9.2, 1.6); });
+      add('samCap', g => { dome(g, hx - 0.3, hy - 3.2, 4.6, 3.6); g.fillRect(hx - 4.8, hy - 4.2, 9.2, 1.6); });
       add('lens', g => g.fillRect(hx + 1.6, hy - 1.5, 2.6, 0.45), 60);
     } else {
       add('hairDark', g => ell(g, hx - 3, hy - 0.6, 1.6, 2.6));
@@ -126,39 +128,67 @@
   }
 
   // ---------------- standing hunter: bow, or rifle on the sling in blaze orange ----------------
-  function standing(pose) {
-    const parts = [], add = (c, d, t) => parts.push({ c, d, t }), rifle = pose === 'rifle', hx = 4.5, hy = -68.5;
-    if (!rifle) add('pack', g => { tube(g, [[-7.5, -58, 3.6], [-8.6, -45, 4.2]]); });
+  // who: 'hunter' (camo, pack) or 'sam' (canvas coat, wool pants, his old recurve). pose: bow, rifle, or draw (at full draw, facing right)
+  const STAND = { hunter: { coat: 'camo', far: 'camoFar', blots: 'camoDark' }, sam: { coat: 'canvasCoat', far: 'canvasFar', legs: 'wool', legsFar: 'woolFar' } };
+  function standing(pose, who) {
+    who = STAND[who] ? who : 'hunter';
+    const parts = [], add = (c, d, t) => parts.push({ c, d, t }), rifle = pose === 'rifle', draw = pose === 'draw', hx = 4.5, hy = -68.5, D = STAND[who];
+    if (draw) return drawn(who, D, add, parts, hx, hy);
+    if (!rifle && who === 'hunter') add('pack', g => { tube(g, [[-7.5, -58, 3.6], [-8.6, -45, 4.2]]); });
     if (rifle) {
       add('stock', g => poly(g, [[-8, -38], [-3.8, -38], [-2.4, -51], [-3.4, -57], [-6.4, -57], [-6.2, -48]]));
       add('steel', g => { tube(g, [[-3.6, -56, 1], [-1.6, -88, 0.6]]); tube(g, [[-6.4, -60, 1.3], [-5.2, -73, 1.2]]); ell(g, -6.5, -59.5, 1.7, 1.2); ell(g, -5.1, -73.5, 1.5, 1.1); });
     }
     const farArm = rifle ? [[1, -57, 2.9], [-1, -47, 2.5], [0, -38, 2.2]] : [[1, -57, 2.9], [8, -50, 2.5], [14, -46, 2.2]];
-    add('camoFar', g => tube(g, [[-1, -37, 4.6], [-3, -20, 3.6], [-5.5, -4.5, 2.7]]));
+    add(D.legsFar || D.far, g => tube(g, [[-1, -37, 4.6], [-3, -20, 3.6], [-5.5, -4.5, 2.7]]));
     add('boot', g => boot(g, -5.5));
-    add('camoFar', g => tube(g, farArm));
+    add(D.far, g => tube(g, farArm));
     add('skinFar', g => ell(g, farArm[2][0] + 0.4, farArm[2][1] + 0.4, 2, 1.9));
     const torso = g => tube(g, [[0, -37, 7], [0.6, -48, 7.6], [1.6, -58, 7.2]]);
     const legNear = g => tube(g, [[1, -37, 4.8], [3, -20, 3.8], [4, -4.5, 2.9]]);
     const armNear = rifle ? [[2, -57, 3.1], [7, -48, 2.7], [4, -56, 2.3]] : [[2, -57, 3.1], [3, -47, 2.7], [7, -40, 2.4]];
-    add('camo', torso);
-    add('camo', legNear);
-    add('camoDark', inside(torso, camo)); add('camoDark', inside(legNear, camo));
+    add(D.coat, torso);
+    add(D.legs || D.coat, legNear);
+    if (D.blots) { add(D.blots, inside(torso, camo)); add(D.blots, inside(legNear, camo)); }
     if (rifle) add('blaze', inside(torso, g => g.fillRect(-12, -61, 24, 22)));
     add('boot', g => boot(g, 4));
     if (rifle) add('band', g => tube(g, [[3.6, -59, 0.6], [-1.5, -49, 0.6], [-6, -41, 0.6]]));
     add('skin', g => tube(g, [[2.5, -61, 2.5], [hx - 1.6, hy + 4.4, 2.5]]));
-    face(add, hx, hy, 'hunter');
-    hunterHat(add, hx, hy, rifle);
+    face(add, hx, hy, who);
+    if (who === 'hunter') hunterHat(add, hx, hy, rifle);
     if (!rifle) {
       add('bowLimb', g => { tube(g, [[15, -51, 1.3], [15, -41, 1.3]]); tube(g, [[15, -51, 0.9], [14, -59, 0.8], [12.2, -66, 0.6]]); tube(g, [[15, -41, 0.9], [14, -33, 0.8], [12.2, -26, 0.6]]); ell(g, 12, -66.4, 1.3, 1.3); ell(g, 12, -25.6, 1.3, 1.3); });
       add('string', g => tube(g, [[11, -66, 0.4], [11, -26, 0.4]]), 50);
       add('skinFar', g => ell(g, 15.2, -46, 2, 2.2));
     }
-    add('camo', g => tube(g, armNear));
-    add('camoDark', inside(g => tube(g, armNear), camo));
+    add(D.coat, g => tube(g, armNear));
+    if (D.blots) add(D.blots, inside(g => tube(g, armNear), camo));
     if (rifle) add('blaze', inside(g => tube(g, armNear), g => g.fillRect(-4, -61, 12, 8)));
     add('skin', g => ell(g, armNear[2][0] + 0.5, armNear[2][1] + 0.4, 2, 2));
+    return parts;
+  }
+
+  // at full draw: bow arm straight out, string hand anchored at the jaw, arrow on the rest
+  function drawn(who, D, add, parts, hx, hy) {
+    const bx = 21, anchor = [hx + 2.6, hy + 4.2];
+    add(D.legsFar || D.far, g => tube(g, [[-1, -37, 4.6], [-4, -20, 3.6], [-7, -4.5, 2.7]]));
+    add('boot', g => boot(g, -7));
+    const torso = g => tube(g, [[0, -37, 7], [0.6, -48, 7.6], [1.6, -58, 7.2]]);
+    const legNear = g => tube(g, [[1, -37, 4.8], [4, -20, 3.8], [6, -4.5, 2.9]]);
+    add(D.coat, torso); add(D.legs || D.coat, legNear);
+    if (D.blots) { add(D.blots, inside(torso, camo)); add(D.blots, inside(legNear, camo)); }
+    add('boot', g => boot(g, 6));
+    add('skin', g => tube(g, [[2.5, -61, 2.5], [hx - 1.6, hy + 4.4, 2.5]]));
+    face(add, hx, hy, who);
+    if (who === 'hunter') hunterHat(add, hx, hy, false);
+    add('bowLimb', g => { tube(g, [[bx, -62, 1.3], [bx, -52, 1.3]]); tube(g, [[bx, -62, 0.9], [bx - 3, -71, 0.8], [bx - 6.5, -78, 0.6]]); tube(g, [[bx, -52, 0.9], [bx - 3, -43, 0.8], [bx - 6.5, -36, 0.6]]); ell(g, bx - 6.7, -78.3, 1.2, 1.2); ell(g, bx - 6.7, -35.7, 1.2, 1.2); });
+    add('string', g => { tube(g, [[bx - 6.7, -78, 0.35], [...anchor, 0.35]]); tube(g, [[bx - 6.7, -36, 0.35], [...anchor, 0.35]]); }, 50);
+    add('shaft', g => tube(g, [[...anchor, 0.45], [bx + 4, -57.5, 0.45]]), 50);
+    add(D.coat, g => tube(g, [[1, -58, 3], [10, -58, 2.6], [bx - 1.5, -57.5, 2.3]]));
+    add('skin', g => ell(g, bx, -57, 2.1, 2.2));
+    add(D.coat, g => tube(g, [[2, -57, 3.1], [-5, -58, 2.7], [anchor[0] - 1, anchor[1] + 1, 2.3]]));
+    if (D.blots) add(D.blots, inside(g => tube(g, [[2, -57, 3.1], [-5, -58, 2.7], [anchor[0] - 1, anchor[1] + 1, 2.3]]), camo));
+    add('skin', g => ell(g, anchor[0], anchor[1] + 0.6, 2, 2));
     return parts;
   }
 
@@ -191,7 +221,7 @@
   A.parts = (an, pose) => {
     if (an.sp !== 'human') return baseParts(an, pose);
     if (an.sex === 'native') return native();
-    if (pose === 'bow' || pose === 'rifle') return standing(pose);
+    if (pose === 'bow' || pose === 'rifle' || pose === 'draw') return standing(pose, an.sex);
     return seated(an.sex, pose);
   };
   // draw someone with their feet at (x, groundY)

@@ -62,7 +62,7 @@
       frame: 'Over Sam’s shoulder at full draw. You mewed, and the bull stopped broadside at 28 yards.',
       law: 'Sam’s tag: an over-the-counter archery elk tag, either sex. The same rules apply: an illegal animal ends the season, a lost one costs a day.',
       threat: 'Your own calling. Overcall, place Sam on the wrong side of the wind, or signal at the wrong moment, and the bull never reaches him.',
-      harder: 'Bulls hang up at 80 yards, circle downwind, and go silent after day 5. Sam has 35 yards, a 5-second hold, and about 3 miles of legs a day.',
+      harder: 'Bulls hang up at 80 yards, circle downwind, and go silent after day 5. Sam has 35 yards, a 30-second hold, and about 3 miles of legs a day.',
       mech: 'The setup map (place the shooter and caller), two-person calling, draw signals, mew-to-stop, and the two-way debrief.',
       gear: 'Sam’s recurve with the string Hank built. Your calls. Hank’s mug.',
       hank: 'Sam: “You called that one in like Hank used to. Then you called it right back out.”'

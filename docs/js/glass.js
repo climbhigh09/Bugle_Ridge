@@ -228,6 +228,12 @@
       this.msg = sp === 'wolf' ? 'Grey shapes moving along the timber.' : sp === 'griz' ? 'A big brown hump turning rocks.' : 'Marked. Get the glass on them.';
       this.hud();
     },
+    // R9: marked elk that walked into the timber this morning are bedded, not gone
+    bedded() {
+      const S = BR.S, c = S.clock;
+      if (S.part !== 'morning' || c >= 12 || S.enc.bumped) return null;
+      return S.enc.groups.find(g => g.found && g.elk.every(k => c >= k.hideAt && k.hideAt < 99)) || null;
+    },
     counts() {
       const c = BR.S.clock, n = {};
       BR.S.enc.groups.filter(g => g.found).forEach(g => g.elk.forEach(k => { if (vis(k, c)) n[k.a.sp] = (n[k.a.sp] || 0) + 1; }));
@@ -237,6 +243,8 @@
       const S = BR.S, ch = BR.ch(), e = S.enc, t = this.target(), over = this.over();
       const counts = this.counts();
       let status = this.msg || 'Drag to pan · hold to glass · let go on an animal';
+      const bed = !t && this.bedded();
+      if (bed && !this.msg) status = 'Bedded on the timber edge. They’ll stand to feed again in the evening.';
       if (t && !this.msg) {
         const leaving = S.part === 'morning' && S.clock > Math.min(...t.elk.map(k => k.hideAt)) - 0.35;
         status = `≈${groupDist(t)} yd · ${leaving ? 'moving toward the timber' : 'feeding in the open'}`;
@@ -250,8 +258,9 @@
         const callable = !t || (t.elk[0].a.sp !== 'wolf' && t.elk[0].a.sp !== 'griz');
         const d = t ? groupDist(t) : 0, cap = ch.guide ? 250 : 500, far = t && d > cap;
         btns = (rifle ? BR.btn('shoot', 'Shoot from here', t && !over && !far ? 'go' : '', null, !t || over || far, !t ? 'Mark something first' : far ? (ch.guide ? `≈${d} yd · too far for Sam` : `≈${d} yd · too far to shoot from here`) : `Get on the rifle off your pack · ≈${d} yd`) : '')
-          + BR.btn('plan', 'Plan a stalk', !rifle && t && !over ? 'go' : '', null, !t || over, t ? 'Map the approach' : 'Spot something first')
-          + BR.btn('call', 'Set up and call', '', null, over || !callable, t ? 'From cover below them' : 'Blind, hoping one is close')
+          + (ch.guide ? '' : BR.btn('plan', 'Plan a stalk', !rifle && t && !over ? 'go' : '', null, !t || over, t ? 'Map the approach' : 'Spot something first'))
+          + BR.btn('call', ch.guide ? 'Set Sam up and call' : 'Set up and call', ch.guide && t && !over ? 'go' : '', null, over || !callable, ch.guide ? (t ? 'Get ahead of them and place Sam' : 'Back to the ridge to locate one') : t ? 'From cover below them' : 'Blind, hoping one is close')
+          + (bed ? BR.btn('standwait', 'Wait for them to stand', 'go', null, false, 'Sit on the glass all afternoon. Skips midday camp.') : '')
           + BR.btn('leave', 'Head back to camp', '');
       }
       BR.hud(`
@@ -263,6 +272,14 @@
     },
     act(a) {
       const S = BR.S, e = S.enc, t = this.target(), c = S.clock;
+      // Calling for Sam: whatever you find, you set Sam up ahead of it and call
+      if (BR.ch().guide && (a === 'plan' || a === 'call')) {
+        if (!t) { e.loc = null; BR.go('locate', { area: e.area }); return; }
+        const seen = t.elk.filter(k => vis(k, c)).map(k => k.a), lead = seen.find(x => x.sex === 'bull') || seen[0];
+        e.loc = { tries: 0, msg: '', animal: lead, answer: { yd: groupDist(t), dir: 'across the basin', dx: 1, pts: lead.pts, cows: seen.filter(x => x.sex === 'cow' && !x.calf).length, silent: Math.random() < 0.3 } };
+        e.g = null; BR.pass(Math.max(10, (groupDist(t) - 100) / 25));
+        BR.go('setup'); return;
+      }
       if (a === 'plan' && t) {
         e.target = { x: t.x / 3, dist: groupDist(t), animals: t.elk.filter(k => vis(k, c)).map(k => ({ a: k.a, hideAt: k.hideAt })), zoneX: BR.ch().zone ? FENCE / 3 : null };
         e.map = null; e.elk = null; e.route = []; e.st = null;
@@ -274,6 +291,14 @@
       } else if (a === 'call') {
         const lead = t ? t.elk[0].a : null;
         BR.go('call', { area: e.area, dist: t ? Math.max(140, groupDist(t) - 260) : null, bull: lead ? lead.sex === 'bull' : null, blind: !t });
+      } else if (a === 'standwait') {
+        const bed = this.bedded(); if (!bed) return;
+        S.part = 'evening'; S.clock = Math.max(S.clock, 15.4 + Math.random() * 1.2);
+        bed.elk.forEach(k => { k.showAt = S.clock + 0.15 + Math.random() * 0.9; k.hideAt = 99; k.feed = true; });
+        e.groups.filter(g => g !== bed).forEach(g => g.elk.forEach(k => { if (k.hideAt < 99) { k.showAt = 99; } }));
+        BR.log('standwait', { area: e.area });
+        BR.go('glass', { area: e.area });
+        this.msg = 'You sat on the glass all afternoon. The thermals swirled at three. Now watch the edge.'; this.hud();
       } else if (a === 'report') {
         let bulls = 0; e.groups.forEach(g => { if (g.found) g.elk.forEach(k => { if (k.a.sex === 'bull') bulls++; }); });
         S.cash += 60 * bulls; S.stats.jobs++;

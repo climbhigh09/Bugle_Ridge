@@ -89,6 +89,8 @@
     return (BR.planCache = { seed: e.map.seed, look: BR.ch().look, grid, canvas: renderMap(grid, e.map.seed, BR.ch().look === 'snow') });
   }
 
+  BR.stalkMap = { genMap: (...a) => genMap(...a), renderMap: (...a) => renderMap(...a), terrainAt: (...a) => terrainAt(...a), TER, CELL, YD, START };
+  BR.animalTop = (...a) => animalTop(...a);
   const TOP = { elk: [P.hide, P.rump, P.mane], moose: ['#3a2c22', '#2a2019', '#2a2019'], wolf: ['#8a8376', '#6a645c', '#5a554e'], griz: ['#8e6c48', '#6b4d31', '#6b4d31'] };
   function animalTop(g, k, x, y, z, headUp) {
     const a = k.a, f = k.dx > 0, c = TOP[a.sp] || TOP.elk, len = a.sp === 'wolf' ? 3 : a.sp === 'moose' ? 5 : 4;

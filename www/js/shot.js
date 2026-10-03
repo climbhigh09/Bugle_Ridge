@@ -79,7 +79,11 @@
         this.scale = BR.clamp(40 / this.range, 0.3, 1.35) * spScale;
       }
       this.flip = Math.random() < 0.5;
-      this.spr = BR.SPR.get(this.animal, sh.from === 'glass' && Math.random() < 0.4 ? 'feed' : 'stand', this.scale, { flip: this.flip });
+      // R5: up close from a call or a stalk he's often still walking. A mew stops him; a walking shot hits back.
+      this.walking = sh.from !== 'glass' && this.range <= 80 && (sh.walking != null ? sh.walking : Math.random() < 0.35) && !sh.stopped;
+      this.spr = BR.SPR.get(this.animal, this.walking ? 'walk' : sh.from === 'glass' && Math.random() < 0.4 ? 'feed' : 'stand', this.scale, { flip: this.flip });
+      // R6: his head comes up and goes down. Draw while it's down or behind cover.
+      this.looking = Math.random() < 0.5; this.lookT = 1 + Math.random() * 2;
       this.pos = { dx: Math.round(W / 2 + 6 - (this.spr.x0 + this.spr.x1) / 2), dy: GROUND - this.spr.gy };
       const z = BR.SPR.vitals(this.animal.sp), fs = this.flip ? -1 : 1;
       this.vit = { x: this.pos.dx + this.spr.cx + z.vit[0] * this.spr.px * fs, y: this.pos.dy + this.spr.gy + z.vit[1] * this.spr.px };
@@ -97,7 +101,7 @@
       this.window = Math.max(3, (sh.from === 'call' ? 4 + Math.random() * 5 : sh.from === 'glass' ? 9 + Math.random() * 6 : 5 + Math.random() * 6) - (sh.alert || 0) / 25);
       this.drawTime = this.rifle ? 0.35 : 0.5 + Math.max(0, this.bow.lb - 50 - S.strength * 4) * 0.04;
       this.budget = this.rifle ? 9 : Math.max(3, 7 + S.strength * 2 - Math.max(0, this.bow.lb - 55) * 0.35 - (this.bow.lb > 55 && S.strength < 1 ? 2 : 0));
-      this.msg = this.guide ? 'Sam’s on the rifle. You spot. Hold on the screen to get him set.' : this.rifle ? 'Hold to shoulder the rifle. Slide to settle. Lift to fire.' : 'Hold on the screen to draw. Slide to settle. Lift to shoot.';
+      this.msg = this.walking ? 'He’s walking. Mew to stop him, or wait for him to stop.' : this.rifle ? 'Hold to shoulder the rifle. Slide to settle. Lift to fire.' : 'Hold on the screen to draw. Slide to settle. Lift to shoot.';
       this.hud();
       BR.animate();
     },
@@ -126,6 +130,9 @@
         if (Math.random() < 0.45 && this.phase === 'ready') { const o = BR.S.enc.shot.options[BR.S.enc.shot.i]; o.angle = ['broadside', 'quartering-away', 'quartering-to'][(Math.random() * 3) | 0]; this.phase = 'done'; BR.go('shot'); return false; }
         return this.finish({ kind: 'walked' });
       }
+      this.lookT -= dt;
+      if (this.lookT <= 0) { this.looking = !this.looking; this.lookT = this.looking ? 1 + Math.random() * 1.6 : 1.6 + Math.random() * 2.4; }
+      if (this.walking) { const v = (this.flip ? -1 : 1) * 5 * this.scale * dt; this.pos.dx += v; this.vit.x += v; }
       if (this.phase === 'drawing') { this.t += dt; if (this.t >= this.drawTime) { this.phase = 'full'; this.holdT = 0; BR.vibe(12); } }
       else if (this.phase === 'full') {
         this.holdT += dt;
@@ -145,7 +152,7 @@
       if (this.phase !== 'ready') return;
       if (this.guide && this.range > 250) { this.msg = 'Sam: “Too far for me. Get me closer.”'; this.upd(); return; }
       this.last = p; this.phase = 'drawing'; this.t = 0;
-      this.spotCheck(1);
+      this.spotCheck(this.rifle ? 1 : this.looking ? 2.6 : 0.35);
     },
     move(p) {
       if (!this.last || (this.phase !== 'drawing' && this.phase !== 'full')) return;
@@ -175,6 +182,7 @@
         held = this.pins[0]; let bd = 1e9;
         this.pins.forEach(pin => { const d = Math.abs(hy + (pin - this.mid) / 10 * GAP * this.k - this.vit.y); if (d < bd) { bd = d; held = pin; } });
       }
+      if (this.walking) ix -= (this.flip ? -1 : 1) * this.range * 0.45 * px;  // he walked through the arrow's flight time
       const sxp = ix - this.pos.dx, syp = iy - this.pos.dy, onBody = this.spr.body(sxp, syp), [wx, wy] = this.spr.world(sxp, syp);
       let zone = BR.SPR.zone(this.animal.sp, wx, wy, this.angle, onBody), deflected = false;
       if (this.branch) {
@@ -185,7 +193,7 @@
       e.shotResult = {
         animal: this.animal, sp: this.animal.sp, zone, range: this.range, est: opt.est, weapon: this.rifle ? 'rifle' : 'bow', held, ke,
         fatigue: +this.fatigue().toFixed(2), angle: this.angle, from: sh.from, high: iy < this.vit.y, wind: opt.wind,
-        windHeld: Math.round((this.vit.x - hx) / px), gr: this.bow ? this.bow.gr : 0, blades: !!S.items.fixedBlades, guide: this.guide, deflected, clock: +S.clock.toFixed(3)
+        walking: this.walking, windHeld: Math.round((this.vit.x - hx) / px), gr: this.bow ? this.bow.gr : 0, blades: !!S.items.fixedBlades, guide: this.guide, deflected, clock: +S.clock.toFixed(3)
       };
       this.impact = { x: ix, y: iy, seen: !this.rifle || S.items.suppressor || this.rf.recoil < 22 };
       this.phase = 'flight'; this.t = 0;
@@ -206,7 +214,7 @@
     draw(g) {
       g.drawImage(meadowBg(BR.S.enc.shot.from === 'call', BR.ch().look), 0, 0);
       const ran = this.phase === 'flight' && this.t > 0.25 && this.impact;
-      g.drawImage(this.spr.canvas, this.pos.dx + (ran ? (this.flip ? -1 : 1) * this.t * 53 : 0), this.pos.dy);
+      g.drawImage(this.spr.canvas, Math.round(this.pos.dx + (ran ? (this.flip ? -1 : 1) * this.t * 53 : 0)), this.pos.dy);
       if (this.branch) { const b = this.branch; for (let x = b.x0; x <= b.x1; x++) { const y = b.y0 + (b.y1 - b.y0) * (x - b.x0) / (b.x1 - b.x0); R(g, x, y - 1, 1, b.w + 1, '#2a2016'); R(g, x, y - 1, 1, 1, '#5a4a36'); if (x % 9 === 0) { R(g, x, y - 4, 1, 3, '#2a2016'); R(g, x + 1, y - 5, 2, 2, BR.ch().look === 'sept' ? '#c99a3e' : '#3a4a2e'); } } }
       if (this.phase === 'flight') {
         if (this.t < 0.35 && this.impact.seen) { R(g, this.impact.x - 1, this.impact.y - 1, 3, 3, P.bone); R(g, this.impact.x, this.impact.y, 1, 1, P.blood); }
@@ -229,8 +237,9 @@
         <div class="row"><span class="t" id="sh-range"></span><span class="dim" id="sh-angle"></span></div>
         <div class="row"><span>HOLD</span><span id="sh-hold"></span></div>
         <div class="row sm"><span id="sh-msg" class="dim"></span></div>
-        <div class="row sm"><span class="dim" id="sh-gear"></span></div>
+        <div class="row sm"><span class="dim" id="sh-gear"></span><span id="sh-look"></span></div>
         <div class="sp"></div>
+        ${this.walking ? BR.btn('mew', 'Mew to stop him', 'go') : ''}
         <div class="g2">${n > 1 ? BR.btn('next', `Next animal (${sh.i + 1}/${n})`) : BR.btn('wait', 'Wait for a better angle')}${BR.btn('pass', 'Pass')}</div>`);
       this.upd();
     },
@@ -238,7 +247,8 @@
       const $ = id => document.getElementById(id); if (!$('sh-range')) return;
       const S = BR.S, opt = S.enc.shot.options[S.enc.shot.i];
       $('sh-range').textContent = S.items.rangefinder ? `${this.range} yd` : `About ${opt.est} yd?`;
-      $('sh-angle').textContent = ANGLE[this.angle] || this.angle;
+      $('sh-angle').textContent = (this.walking ? 'walking · ' : '') + (ANGLE[this.angle] || this.angle);
+      if ($('sh-look')) { $('sh-look').className = this.looking ? 'warn' : 'ok'; $('sh-look').textContent = this.rifle && this.range > 120 ? '' : this.looking ? 'head up' : 'head down'; }
       const left = this.phase === 'full' ? BR.clamp(1 - this.holdT / this.budget, 0, 1) : 1;
       $('sh-hold').innerHTML = BR.meter(Math.ceil(left * 5), 5, left < 0.3 ? 'bad' : left < 0.6 ? 'warn' : '');
       $('sh-msg').textContent = this.phase === 'full' ? (this.fatigue() > 0.8 ? 'Crosshair’s swimming. Shoot or come off it.' : 'Settle it. Lift to shoot.') : this.phase === 'drawing' ? '…' : this.msg;
@@ -250,6 +260,12 @@
     act(a) {
       const S = BR.S, sh = S.enc.shot;
       if (this.phase !== 'ready') return;
+      if (a === 'mew' && this.walking) {
+        this.walking = false; sh.stopped = true; sh.alert = (sh.alert || 0) + 8;
+        this.spr = BR.SPR.get(this.animal, 'stand', this.scale, { flip: this.flip });
+        this.looking = true; this.lookT = 1.4; this.window = Math.max(this.window, 3 + Math.random() * 2.5);
+        this.msg = 'You mew. He stops and looks for the cow.'; this.hud(); return;
+      }
       if (a === 'next') { sh.i = (sh.i + 1) % sh.options.length; BR.pass(0.5); this.phase = 'done'; BR.go('shot'); }
       else if (a === 'pass') this.finish({ kind: 'passed' });
       else if (a === 'wait') {
@@ -273,7 +289,7 @@
       case 'heart': return { sign: 'Ran sixty yards and piled up. Bright blood where it stood.', need: 0, lethal: 1, trail: 6 };
       case 'vitals': return { sign: 'Hunched at the shot and bolted. Pink, frothy blood where it stood.', need: 0.5, lethal: 1, trail: 8 };
       case 'liver': return { sign: 'Walked off slow and humped up. Dark red blood.', need: 4, lethal: 0.95, trail: 12 };
-      case 'paunch': return { sign: 'Kicked and hunched. Green matter in the blood.', need: 8, lethal: 0.85, trail: 14 };
+      case 'paunch': return { sign: 'Kicked and hunched. Green matter in the blood.', need: 6, lethal: 0.85, trail: 14 };
       case 'shoulder': return ke >= 1500 ? { sign: 'Dropped, got up, and went forty yards. Bone chips and bright blood.', need: 1, lethal: 0.95, trail: 8 } : { sign: 'Bone chips and a little blood. Went off on three legs.', need: 4, lethal: 0.5, trail: 11 };
       case 'spine': return r() < 0.4 ? { sign: 'Dropped in its tracks.', need: 0, lethal: 1, trail: 2 } : { sign: 'Dropped, then got up and ran. Hair, and very little blood.', need: 2, lethal: 0.35, trail: 9 };
       case 'neck': return { sign: 'Neck hair and bright blood, but not much of it.', need: 2, lethal: 0.4, trail: 10 };
@@ -284,7 +300,7 @@
       case 'heart': return { sign: 'Bright red blood, heavy spray. You heard it crash inside 80 yards.', need: 0, lethal: 1, trail: 6 };
       case 'vitals': return { sign: 'Pink, frothy blood with tiny bubbles on the arrow.', need: 0.5, lethal: 1, trail: 9 };
       case 'liver': return { sign: 'Dark red blood on the arrow. No bubbles.', need: 4, lethal: 0.95, trail: 12 };
-      case 'paunch': return { sign: 'Green-brown matter and a sour smell on the arrow.', need: 8, lethal: 0.85, trail: 14 };
+      case 'paunch': return { sign: 'Green-brown matter and a sour smell on the arrow.', need: 6, lethal: 0.85, trail: 14 };
       case 'shoulder':
         if (ke >= 65 && blades) return { sign: 'Arrow buried through the shoulder. Bright blood right away.', need: 1, lethal: 0.9, trail: 10 };
         if (ke >= 65) return { sign: 'Arrow snapped off 8 inches deep. Some bright blood.', need: 4, lethal: 0.5, trail: 12 };
@@ -368,14 +384,14 @@
       let body;
       if (rec.phase === 'sign') {
         body = `<div class="row"><span class="t">HIT · ${res.range} YD</span><span class="hi">${BR.fmt(S.clock)}</span></div>
-          <div class="quote">${rec.m.sign}</div>
-          <div class="tagline">Read the sign, then decide how long to let it lie down.</div>
+          <div class="quote">${BR.samReaction ? BR.samReaction(res.zone) + ' ' : ''}${rec.m.sign}</div>
+          <div class="tagline">Lungs: track in 30 minutes. Liver: give it 4 hours. Gut: 6 or more. Push it early and you may never find it.</div>
           <div class="sp"></div>
           <div class="g2">${BR.btn('wait', 'Track now', '', 0)}${BR.btn('wait', 'Wait 30 min', '', 0.5)}${BR.btn('wait', 'Wait 4 hours', '', 4)}${BR.btn('wait', 'Back at first light', '', 9)}</div>`;
       } else if (rec.phase === 'track') {
         const first = rec.found === 0;
         body = `<div class="row"><span class="t">BLOOD TRAIL</span><span class="hi">${rec.found} drop${rec.found === 1 ? '' : 's'} found</span></div>
-          <div class="quote">${first ? 'It ran off. Tap the pulsing drop of blood to start trailing.' : 'Find and tap the next drop of blood.'}</div>
+          <div class="quote">${first ? 'Hit elk usually head uphill. Tap the pulsing drop of blood to start trailing.' : 'Find and tap the next drop of blood.'}</div>
           <div class="row sm"><span class="${this.msg ? 'toast' : 'dim'}">${this.msg || (first ? 'Each drop you find leads to the next one.' : 'Look close. Some drops are a single speck.')}</span></div><div class="sp"></div>`;
         this.msg = null;
       } else if (rec.phase === 'dry') {

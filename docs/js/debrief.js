@@ -8,7 +8,10 @@
       movement: ['BUSTED · SEEN', `She pinned you at ${o.yd} yards. One bark and they were gone.`],
       noise: ['BUSTED · NOISE', `That last crunch on the ${o.terrain || 'slope'} was one too many.`],
       circled: ['BUSTED · WINDED', `It swung downwind at ${o.yd} yards, caught your scent, and crashed off.`],
-      drew: ['BUSTED · CAUGHT MOVING', 'It saw you come up and was gone in two jumps.']
+      drew: ['BUSTED · CAUGHT MOVING', 'It saw you come up and was gone in two jumps.'],
+      samScent: ['BUSTED · SAM’S WIND', `He walked into Sam’s scent at ${o.yd} yards. One bark and he was gone.`],
+      samSeen: ['BUSTED · SAM MOVED', `He was looking straight at Sam when Sam drew. ${o.yd} yards, and gone.`],
+      cowSaw: ['BUSTED · THE COWS', `A cow ${o.yd < 25 ? 'right on top of Sam' : 'ahead of the bull'} caught Sam drawing. She barked, and the whole herd went.`]
     }[o.cause] || ['BUSTED', 'They’re gone.']),
     gone: () => ['THEY BEDDED', 'They fed into the dark timber before you got there.'],
     dark: () => ['OUT OF LIGHT', 'Legal light’s gone. You pick your way back by headlamp.'],
@@ -17,14 +20,17 @@
       bugle: ['HE HERDED HIS COWS OFF', 'You told him to gather his cows and leave. He did.'],
       interest: ['LOST INTEREST', 'The answers got farther off, then stopped.']
     }[o.cause] || ['IT WENT QUIET', '']),
-    miss: o => o.deflected ? ['DEFLECTED', `The ${o.weapon === 'rifle' ? 'bullet' : 'arrow'} clipped the branch and went wild.`] : [`CLEAN MISS · ${o.high ? 'HIGH' : 'LOW'}`, `The ${o.weapon === 'rifle' ? 'bullet' : 'arrow'} went ${o.high ? 'over' : 'under'} it at ${o.range} yards.`],
-    bumped: () => ['BUMPED', BR.ch().weapon === 'rifle' ? 'Two orange vests walked right through them. Public land.' : 'Another bowhunter came crashing up the trail, cow calling. Everything left.'],
+    miss: o => o.guide ? (o.deflected ? ['DEFLECTED', 'Sam’s arrow ticked a branch and went wild.'] : ['SAM MISSED', `Sam’s arrow went ${o.high ? 'over his back' : 'under his chest'} at ${o.range} yards. He sat down hard on the log.`]) : o.deflected ? ['DEFLECTED', `The ${o.weapon === 'rifle' ? 'bullet' : 'arrow'} clipped the branch and went wild.`] : [`CLEAN MISS · ${o.high ? 'HIGH' : 'LOW'}`, `The ${o.weapon === 'rifle' ? 'bullet' : 'arrow'} went ${o.high ? 'over' : 'under'} it at ${o.range} yards.`],
+    leftEarly: o => ['HE CAME ANYWAY', 'You walked out. Ten minutes later, from the ridge, you watched a bull walk into your setup without a sound.'],
+    bumped: o => o.cause === 'atv' ? ['BUMPED · SIDE-BY-SIDE', 'A side-by-side rattled through the clearing at the wrong moment. Everything left.']
+      : o.cause === 'hunter' ? ['BUMPED · ANOTHER HUNTER', 'Another hunter walked in on your bull, cow-calling. He blew out the whole basin.'] : ['BUMPED', BR.ch().weapon === 'rifle' ? 'Two orange vests walked right through them. Public land.' : 'Another bowhunter came crashing up the trail, cow calling. Everything left.'],
     walked: () => ['IT WALKED', 'It stepped into the timber before you got a shot off.'],
     passed: () => ['YOU PASSED', 'You let it go.'],
     lost: () => ['LOST IT', 'You searched until dark and never found it. Tomorrow goes to looking.'],
     charge: () => ['GRIZZLY', 'A grizzly came out of the timber at a run and stopped at 15 yards. Then it left. You need a day, and clean pants.'],
     illegal: o => ['SEASON OVER', o.reason + ' You tag it, call it in, and go home.'],
     predator: o => ['TAGGED', (o.sp === 'wolf' ? 'A wolf, with the tag to go with it.' : 'A grizzly. You drew the tag, and you filled it.') + ` Packing it out takes ${o.days || 1} day${(o.days || 1) === 1 ? '' : 's'}.`],
+    blowback: () => ['SPRAY BLEW BACK', 'A grizzly came in to your calling. You sprayed into the wind and it blew straight back at you. The bear stopped at ten yards and left. You lose a day.'],
     sprayed: () => ['BEAR SPRAY', 'A grizzly came out of the timber at a run. You emptied the can in its face at 10 yards and it turned and crashed off.']
   };
 
@@ -45,6 +51,7 @@
         for (let i = 0; i < 3; i++) BR.SPR.draw(g, spr, 67 + i * 48, 195 - (i % 2) * 5);
       }
       BR.person(g, 'hunter', BR.ch().weapon === 'bow' ? 'bow' : 'rifle', 46, 307, 1.1);
+      if (BR.ch().guide) BR.person(g, 'sam', 'bow', 18, 305, 1.1);
     },
     hud() {
       const S = BR.S, bad = !['passed', 'predator', 'sprayed'].includes(this.o.kind);
@@ -59,14 +66,42 @@
   };
 
   // ---------------- lesson picker ----------------
+  // Calling for Sam: you pick what Sam needs to hear (skill); Sam tells you what you did (sam).
+  function guideLesson(ev) {
+    const find = t => ev.filter(x => x.type === t).pop(), setup = find('setup');
+    let x;
+    if ((x = find('samShot'))) {
+      const res = find('kill') || find('recovered');
+      if (x.walking) return { q: 'walking', skill: 'Wait for my mew. Shoot him stopped, never walking.', sam: res ? '“You never stopped him. I got lucky.”' : '“He never stopped. You have to stop him for me.”' };
+      if (x.holdT > 20) return { q: 'shaky', skill: 'Don’t come to full draw until he’s almost in your lane.', sam: '“You had me at full draw forever. Signal later.”' };
+      if (find('kill')) return { q: 'kill', skill: 'Pick one hair and shoot it. Same as today.', sam: pick(['“That’s the setup Hank would’ve drawn up.”', '“You put him right in my lap.”']), good: true };
+      if (x.zone === 'miss') return { q: 'miss', skill: 'Pick a spot on the hair, not the whole elk.', sam: '“That’s on me. You did your part.”' };
+      return { q: 'hit', skill: 'Wait for the near leg to step forward.', sam: '“You stopped him good. I pulled it.”' };
+    }
+    if ((x = find('bust'))) {
+      if (x.cause === 'samScent') return { q: x.cause, skill: 'Sit still and trust where I put you.', sam: '“He walked through my wind. Put me where he can’t get below me.”' };
+      if (x.cause === 'circled') return { q: x.cause, skill: 'Stay put when he circles. Don’t chase the shot.', sam: setup && !setup.downwindSide ? '“He swung to the other side. Bulls circle downwind. Put me there.”' : '“He got below you before he got to me. Set me farther out.”' };
+      if (x.cause === 'samSeen') return { q: x.cause, skill: 'Draw only when his eyes are behind a tree.', sam: setup && setup.cover === 'open' ? '“You put me in the wide open and signaled while he stared at me.”' : '“You signaled while he was looking right at me.”' };
+      if (x.cause === 'cowSaw') return { q: x.cause, skill: 'Let the cows walk by. The bull’s always last.', sam: '“Those cows were right on top of me. Wait for the bull.”' };
+      if (x.cause === 'movement') return { q: x.cause, skill: 'When he hangs up, be patient.', sam: '“You crept in on him across the open. He saw you.”' };
+    }
+    if ((x = find('hangup'))) return x.cause === 'overcall' ? { q: 'overcall', skill: 'Be patient when the calling stops.', sam: '“You called too much. Real cows shut up and feed.”' } : x.cause === 'bugle' ? { q: 'herd', skill: 'Be patient when the calling stops.', sam: '“You challenged a herd bull and he took his cows home. Cow-call a herd bull.”' } : null;
+    if (find('leftEarly')) return { q: 'left', skill: 'Sit thirty minutes after the last call.', sam: '“We walked out on a quiet bull. Hank always sat thirty minutes after the last call.”' };
+    if (setup && setup.closest > 45 && find('walked')) return { q: 'wide', skill: 'Stay ready even when he’s out of range.', sam: `“He walked by me at ${setup.closest} yards. You put me in the wrong place.”` };
+    return null;
+  }
+
   function lesson(S) {
     const ev = S.events.filter(x => x.day === S.day), has = S.items, ch = BR.ch(), rifle = ch.weapon === 'rifle';
     const find = t => ev.filter(x => x.type === t).pop();
     let x;
+    if (ch.guide) { const gl = guideLesson(ev); if (gl) return Object.assign({ gear: null }, gl); }
     if ((x = find('miss')) && x.deflected) return { q: 'You shot through a branch. An arrow finds every twig between you and the elk.', skill: 'If there’s brush in the lane, wait one step or move one step.', gear: null };
     if ((x = find('bumped'))) return { q: pick(['Public land. Somebody always walks in.', 'Nothing you did wrong. Somebody else walked in on them.', 'Crowds push elk. The ones that stay are the ones nobody can reach.']), skill: 'Go earlier, go farther, or hunt the pocket nobody wants to climb to.', gear: null };
     if ((x = find('illegal'))) return { q: `${x.reason} That ends the season.`, skill: 'Know exactly what your tag allows before you ever pick up the weapon.', gear: null };
     if ((x = find('sprayed'))) return { q: 'You sprayed a grizzly, and it worked. Now listen: when that spray wears off, the smell pulls bears in. Do not go back there this season.', skill: 'Never return to the place you sprayed.', gear: 'bearSpray' };
+    if ((x = find('blowback'))) return { q: 'Spray into the wind comes right back at you. Check the wind before you ever need it.', skill: 'Bear spray works with the wind at your back. Into a headwind it’s useless.', gear: has.bearSpray ? null : 'bearSpray' };
+    if ((x = find('leftEarly'))) return { q: 'He went quiet, so you walked out. He was coming the whole time.', skill: 'Sit thirty minutes after the last call. Silent bulls come in from downwind.', gear: null };
     if ((x = find('lostday')) && x.reason === 'grizzly') return { q: 'Everybody’s legs quit the first time a grizzly runs at them. You’re alive, and you lost a day.', skill: 'In bear country, make noise in the thick stuff and come into kill sites upwind.', gear: has.bearSpray ? null : 'bearSpray' };
     if ((x = find('lost'))) {
       if (x.weapon === 'rifle' && x.zone === 'shoulder') return { q: `At ${x.range} yards that bullet was carrying ${x.ke} foot-pounds. The shoulder soaked it up.`, skill: 'Get closer, or take the shot behind the shoulder.', gear: BR.rifle().id === '3006' || BR.rifle().id === '65cm' ? 'rifle:7prc' : null };
@@ -112,7 +147,7 @@
   }
   const pick = a => a[(Math.random() * a.length) | 0];
   BR.lesson = lesson;
-  const DISTRACT = ['Shoot sooner, before it can think about it.', 'Call more. They love to hear it.', 'Walk faster through the timber.', 'Bigger gun fixes most of this.', 'Take the long shot while you have it.'];
+  const DISTRACT = ['Shoot him walking before he gets away.', 'Draw the second you hear him coming.', 'Take the 45-yard shot if the lane’s open.', 'Stand up and look when he hangs up.', 'Shoot sooner, before he can think about it.'];
 
   const SPEAKER = ['HANK', 'HANK', 'HANK · on the radio', 'HANK · sat messenger', 'HANK', 'YOU'];
   BR.scenes.debrief = {
@@ -146,7 +181,8 @@
       if (ch.guide) {
         middle = L.picked == null
           ? `<div class="tagline">Sam looks at you across the fire. What does he need to hear about today?</div>${L.opts.map((o, i) => BR.btn('pick', o, '', i)).join('')}`
-          : `<div class="quote">${L.picked ? 'Sam nods. “Hank used to say that exact thing.”' : 'Sam shrugs. “If you say so.”'}</div>`;
+          : `<div class="quote">${L.picked ? 'Sam nods. “Hank used to say that exact thing.”' : 'Sam shrugs. “If you say so.”'}</div>
+             <div class="row sm"><span class="dim">SAM ON YOU</span></div><div class="quote">${L.sam || pick(['“Good walk. Same time tomorrow.”', '“You’re getting the hang of that cow call.”', '“Quiet day. Your granddad’s too old for busy ones anyway.”'])}</div>`;
       } else {
         middle = `<div class="quote">“${L.q}”</div>
           <div class="row sm"><span class="dim">SKILL</span><span style="text-align:right">${L.skill}</span></div>

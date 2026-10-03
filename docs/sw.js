@@ -1,6 +1,6 @@
-// Bugle Ridge 1.3.0 (202609161420)
-const CACHE = 'bugle-ridge-202609161420';
-const FILES = ["./","index.html","style.css","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","icons/apple-touch-icon.png","js/core.js","js/data.js","js/sprites.js","js/animals.js","js/people.js","js/season.js","js/camp.js","js/glass.js","js/stalk.js","js/call.js","js/shot.js","js/range.js","js/debrief.js","js/native.js"];
+// Bugle Ridge 1.4.0 (202610030346)
+const CACHE = 'bugle-ridge-202610030346';
+const FILES = ["./","index.html","style.css","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","icons/apple-touch-icon.png","js/core.js","js/data.js","js/sprites.js","js/animals.js","js/people.js","js/season.js","js/camp.js","js/glass.js","js/stalk.js","js/call.js","js/shot.js","js/range.js","js/debrief.js","js/native.js","js/guide.js"];
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
     const keys = await caches.keys(), installed = keys.some(k => k.startsWith('bugle-ridge-2'));

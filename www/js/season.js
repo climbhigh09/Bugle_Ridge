@@ -28,7 +28,12 @@
     S.sprayed = S.sprayed || {};
     if (S.sprayed[area] === S.day) return 'gone';
     BR.vibe(300);
-    if (S.items.bearSpray) { delete S.items.bearSpray; S.sprayed[area] = S.day; BR.log('sprayed', { area }); return 'sprayed'; }
+    if (S.items.bearSpray) {
+      delete S.items.bearSpray;
+      // R12: spray into a headwind blows back on you; the bear keeps coming and stops short anyway
+      if (Math.random() < 0.3) { BR.log('blowback', { area }); BR.skipDay('grizzly'); return 'blowback'; }
+      S.sprayed[area] = S.day; BR.log('sprayed', { area }); return 'sprayed';
+    }
     BR.skipDay('grizzly');
     return 'charged';
   };
@@ -112,7 +117,8 @@
     shade: { name: 'Hang it in the shade, 100 yd off', blurb: 'North side of the timber, away from the carcass.', f: 1, pred: 0 },
     creek: { name: 'Hang it over the creek', blurb: 'Cold air off the water.', f: 0.8, pred: 0.05 },
     sun: { name: 'Pile it in the meadow', blurb: 'Close and easy to find.', f: 2.2, pred: 0.15 },
-    ground: { name: 'Leave it by the carcass', blurb: 'Come back for it in the morning.', f: 1.6, pred: 0.3 }
+    ground: { name: 'Leave it by the carcass', blurb: 'Come back for it in the morning.', f: 1.6, pred: 0.3 },
+    away: { name: 'Hang it 200 yd off, come back upwind', blurb: 'Grizzly country. Glass the carcass before you walk in.', f: 1.05, pred: 0, bears: true }
   };
   // Butchering plus packing, in hours. Boned-out elk packs at roughly a 12-hour day per 5 miles; heavier loads take
   // longer, moose and grizzly twice as long. Boning out is the slowest cut but the lightest carry, so it only pays on long hauls.
@@ -140,7 +146,7 @@
           <div class="list">${Object.entries(METHODS).map(([k, v]) => { const pl = BR.packPlan(a, e.area, k); return BR.btn('method', v.name, '', k, false, `${v.blurb} ≈${pl.proc.toFixed(1)} h to cut, ${pl.pack.toFixed(1)} h to pack ${pl.miles} mi${pl.extra ? ` · ${pl.extra} more day${pl.extra === 1 ? '' : 's'}` : ' · done by dark'}`); }).join('')}</div>`);
       } else if (m.step === 'hang') {
         BR.hud(`<div class="row"><span class="t">WHERE DOES THE MEAT GO?</span><span class="hi">${METHODS[m.method].name}</span></div>
-          <div class="list">${Object.entries(HANGS).map(([k, v]) => BR.btn('hang', v.name, '', k, false, v.blurb)).join('')}</div>`);
+          <div class="list">${Object.entries(HANGS).filter(([, v]) => !v.bears || ch.bears).map(([k, v]) => BR.btn('hang', v.name, '', k, false, v.blurb)).join('')}</div>`);
       } else if (m.step === 'spray') {
         BR.hud(`<div class="row"><span class="t bad">BEAR SPRAY</span><span class="hi">${BR.fmt(S.clock)}</span></div>
           <div class="quote">${m.text}</div>
@@ -148,7 +154,7 @@
           <div class="sp"></div>${BR.btn('goback', 'Go back for the rest')}${BR.btn('leaverest', 'Leave the rest on the mountain', 'go')}`);
       } else {
         const base = a.sp === 'moose' ? 550 : a.sex === 'cow' ? 170 : 230, saved = Math.round(base * (1 - m.spoil));
-        const load = S.items.framePack ? 100 : 70, trips = Math.max(1, Math.ceil(saved * METHODS[m.method].weight / load));
+        const load = S.items.framePack ? 70 : 55, trips = Math.max(1, Math.ceil(saved * METHODS[m.method].weight / load));
         BR.hud(`<div class="row"><span class="t ${m.spoil > 0.3 ? 'bad' : 'ok'}">MEAT</span><span class="hi">${saved} lb saved</span></div>
           <div class="quote">${m.text}</div>
           <div class="row sm"><span class="dim">${m.truck} mi from the truck · ${m.hours} h of work · ${m.days > 1 ? `${m.days - 1} more day${m.days === 2 ? '' : 's'}` : 'done by dark'} · ${trips} trip${trips === 1 ? '' : 's'}</span><span class="dim">${Math.round(m.spoil * 100)}% lost</span></div>
@@ -174,11 +180,12 @@
         else if (arg === 'sun') lines.push('Blowflies found it in the sun before you got back.');
         else if (h.pred && (ch.wolves || ch.bears)) lines.push('Something got into it overnight.');
         else lines.push('You lost some of it.');
-        const bear = (ch.charge || 0) + BR.campData().bear;
+        const bear = ((ch.charge || 0) + BR.campData().bear) * (arg === 'away' ? 0.35 : 1);
         m.step = 'done';
         if (bear && Math.random() < bear) {
           const r = BR.bearCharge(e.area);
           if (r === 'charged') { m.charged = true; lines.push('Coming back for the second load, a grizzly false-charged you from 15 yards. You lose a day collecting yourself.'); }
+          else if (r === 'blowback') { m.charged = true; lines.push('A grizzly came at you on the second load. You sprayed into the wind and it blew back in your face. The bear stopped short anyway. You lose a day.'); }
           else if (r === 'sprayed') {
             lines.push('On the second load a grizzly came at you. You emptied the spray in its face and it turned.');
             if (m.days > 1) m.step = 'spray';
@@ -280,7 +287,7 @@
     2: ['Hank’s knee gives out on the pack-out. “Idaho’s still on,” he says. “I’ll run the radio from the trailhead.”'],
     3: ['A satellite message from Hank: “Montana. Public land, grizzlies, and a lot of orange. Hunt where they aren’t.”'],
     4: ['Hank calls in the spring. “One more float. Alaska. Book it before I come to my senses.”'],
-    5: ['Hank’s float was his last trip. He gives you his coffee mug at the airstrip.', 'A year later Sam calls. He wants one more elk season, and he wants you to take him.']
+    5: ['Hank’s float was his last trip. He gives you his coffee mug at the airstrip.', 'A year later Sam calls. He wants one more September, with his old recurve, and he wants you calling.']
   };
   BR.scenes.bridge = {
     enter(a) { this.to = a && a.to != null ? a.to : BR.S.chapter + 1; this.hud(); },

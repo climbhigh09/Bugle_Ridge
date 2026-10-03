@@ -86,6 +86,19 @@
     return a.pts === 1 ? 'spike bull' : a.pts === 2 ? 'forkhorn bull' : `${a.pts}-point bull`;
   };
 
+  // ---------------- the calendar: each chapter starts on a real date; the elk rut follows the date ----------------
+  const MDAYS = { 8: 31, 9: 30, 10: 31, 11: 30 }, MON = { 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov' };
+  BR.date = (ch, day) => { let [m, d] = ch.start; d += day - 1; while (d > MDAYS[m]) { d -= MDAYS[m]; m++; } return { m, d, label: MON[m] + ' ' + d }; };
+  // pre-rut to Sep 9, building to the 16th, peak Sep 17–27, post-rut into early October,
+  // a second, smaller rut while unbred cows recycle (to about Oct 13), then late season
+  const RUT = [[9, 'Pre-rut', 1], [16, 'Rut building', 1.4], [27, 'Peak rut', 2], [33, 'Post-rut', 1], [43, 'Second rut', 0.75], [999, 'Late season', 0.3]];
+  BR.rutPhase = (ch, day) => {
+    if (ch.species === 'moose') return { label: 'Moose rut', level: 1.4 };
+    const t = BR.date(ch, day), n = t.m === 8 ? t.d - 31 : t.m === 9 ? t.d : t.m === 10 ? 30 + t.d : 61 + t.d, row = RUT.find(r => n <= r[0]);
+    return { label: row[1], level: row[2] };
+  };
+  const byDate = function (d) { return BR.rutPhase(this, d).level; };
+
   // ---------------- chapters ----------------
   const CO_AREAS = {
     bench: { id: 'bench', name: 'North bench', blurb: 'Open parks on a south face. Long glassing.', miles: 0.8, sun: 8.7, mix: M(0.55, 0.3, 0.05, 0.1), elk: 0.85 },
@@ -97,7 +110,7 @@
   BR.CHAPTERS = [
     {
       id: 'co-arch', name: 'Colorado', sub: 'Archery · September rut', weapon: 'bow', species: 'elk', temp: 1, look: 'sept', light: [6.3, 19.35], pressure: d => (d <= 3 ? 0.25 : 0.12),
-      rut: d => (d <= 2 ? 1 : d <= 6 ? 2 : 1.5), callShy: d => (d >= 4 ? 0.75 : 1), wolves: 0, bears: 0, dysentery: true,
+      start: [9, 12], rut: byDate, callShy: d => (d >= 4 ? 0.75 : 1), wolves: 0, bears: 0, dysentery: true,
       areas: [CO_AREAS.bench, CO_AREAS.burn, CO_AREAS.wallow],
       camps: [camp('trailhead', 'Truck at the trailhead', 'Warm and dry. Longer hikes in the dark.', 1.5, 0, ['jug']),
         camp('spike', 'Spike camp in the basin', 'Short walks. Your noise can push elk out.', 0.5, 0.2, ['wallow', 'pond']),
@@ -110,7 +123,7 @@
     },
     {
       id: 'co-rifle', name: 'Colorado', sub: '2nd rifle · October', weapon: 'rifle', species: 'elk', temp: 0.3, look: 'snow', light: [6.7, 18.8], pressure: d => (d <= 2 ? 0.6 : 0.35),
-      rut: () => 0.3, callShy: () => 0.55, wolves: 0, bears: 0, dysentery: true,
+      start: [10, 24], rut: byDate, callShy: () => 0.55, wolves: 0, bears: 0, dysentery: true,
       areas: [Object.assign({}, CO_AREAS.bench, { blurb: 'Snowy parks. Elk feed out at first and last light.' }), CO_AREAS.burn,
         Object.assign({}, CO_AREAS.wallow, { name: 'Dark timber', blurb: 'Bedded elk. Calls barely work after the rut.' })],
       camps: [camp('trailhead', 'Truck at the trailhead', 'Heater in the truck. Long cold hikes.', 1.5, 0, ['jug']),
@@ -125,7 +138,7 @@
     },
     {
       id: 'idaho', name: 'Idaho', sub: 'Zone tag · wolf country', weapon: 'rifle', species: 'elk', temp: 0.7, look: 'breaks', light: [6.8, 19.3], pressure: () => 0.2,
-      rut: () => 0.7, callShy: () => 0.45, wolves: 0.4, bears: 0, dysentery: true, zone: true, wolfTag: 32,
+      start: [10, 8], rut: byDate, callShy: () => 0.45, wolves: 0.4, bears: 0, dysentery: true, zone: true, wolfTag: 32,
       areas: [{ id: 'canyon', name: 'Canyon face', blurb: 'Steep and open across the river. Long shots.', miles: 1.6, sun: 8.2, mix: M(0.5, 0.3, 0, 0.2), elk: 0.8 },
         { id: 'draw', name: 'Brushy draw', blurb: 'Thick brush and deadfall. Close encounters.', miles: 1.1, sun: 9.4, mix: M(0.35, 0.35, 0.3, 0), elk: 0.7 },
         { id: 'riverbench', name: 'River bench', blurb: 'Open grass above the river. Early feed.', miles: 2.8, sun: 7.6, mix: M(0.62, 0.28, 0.05, 0.05), elk: 0.85 }],
@@ -141,7 +154,7 @@
     },
     {
       id: 'montana', name: 'Montana', sub: 'Public land · brow-tined bulls', weapon: 'rifle', species: 'elk', temp: 0.25, look: 'breaks', light: [7, 18.2], pressure: d => (d <= 3 ? 0.6 : 0.4),
-      rut: () => 0.2, callShy: () => 0.5, wolves: 0.25, bears: 0.2, dysentery: true, wolfTag: 50, grizDraw: true, charge: 0.3,
+      start: [10, 24], rut: byDate, callShy: () => 0.5, wolves: 0.25, bears: 0.2, dysentery: true, wolfTag: 50, grizDraw: true, charge: 0.3,
       areas: [{ id: 'coulee', name: 'Coulee breaks', blurb: 'Big open country, little cover.', miles: 3.2, sun: 7.8, mix: M(0.75, 0.1, 0, 0.15), elk: 0.8 },
         { id: 'bma', name: 'Block Management ranch', blurb: 'Sign in at the box. Walk-in only.', miles: 1.0, sun: 8, mix: M(0.7, 0.15, 0.15, 0), elk: 0.7 },
         { id: 'pocket', name: 'Timbered pocket', blurb: 'The spot nobody walks to. Grizzly sign.', miles: 4.5, sun: 9.6, mix: M(0.3, 0.6, 0.1, 0), elk: 0.9, bear: true }],
@@ -157,7 +170,7 @@
     },
     {
       id: 'alaska', name: 'Alaska', sub: 'Moose · float hunt', weapon: 'rifle', species: 'moose', temp: 0.55, look: 'ak', light: null, pressure: () => 0.03,
-      rut: () => 1.4, callShy: () => 1, wolves: 0, bears: 0.3, dysentery: false, grizDraw: true, charge: 0.35, meatOnBone: true, sameDayAirborne: true,
+      start: [9, 10], rut: () => 1.4, callShy: () => 1, wolves: 0, bears: 0.3, dysentery: false, grizDraw: true, charge: 0.35, meatOnBone: true, sameDayAirborne: true,
       areas: [{ id: 'willows', name: 'Willow flats', blurb: 'Glass the willows at first light.', miles: 0.6, sun: 8.8, mix: M(0.5, 0.15, 0.35, 0), elk: 0.85 },
         { id: 'slough', name: 'Slough bend', blurb: 'Call from the bank. Patience.', miles: 1.2, sun: 9.5, mix: M(0.2, 0.5, 0.3, 0), elk: 0.8, callOnly: true },
         { id: 'burnridge', name: 'Burn ridge', blurb: 'Climb for a view over the river.', miles: 2.2, sun: 8.2, mix: M(0.5, 0.3, 0.2, 0), elk: 0.7 }],
@@ -171,18 +184,27 @@
         'Hank’s going with you. His last float, he says.']
     },
     {
-      id: 'epilogue', name: 'Colorado', sub: 'Grandpa Sam’s hunt', weapon: 'rifle', species: 'elk', temp: 0.3, look: 'snow', guide: true, light: [6.7, 18.8], pressure: () => 0.3,
-      rut: () => 0.3, callShy: () => 0.6, wolves: 0, bears: 0, dysentery: true,
-      areas: [Object.assign({}, CO_AREAS.bench, { miles: 0.4, blurb: 'Short walk. Sam can glass from the truck.' }),
-        Object.assign({}, CO_AREAS.burn, { miles: 1, blurb: 'Rough going for old legs.' }),
-        Object.assign({}, CO_AREAS.wallow, { miles: 0.7, name: 'Dark timber', blurb: 'Still-hunt slow.' })],
-      camps: [camp('trailhead', 'Truck at the trailhead', 'Sam sleeps warm.', 1, 0, ['jug']),
+      // Calling for Sam: a full September archery season. You call; Grandpa Sam carries his old recurve and shoots.
+      id: 'epilogue', name: 'Colorado', sub: 'Calling for Sam', weapon: 'bow', species: 'elk', temp: 1, look: 'sept', guide: true, light: [6.4, 19.2],
+      pressure: d => (d === 4 ? 0.35 : d <= 3 ? 0.2 : 0.12), start: [9, 18], rut: byDate, callShy: d => (d >= 6 ? 0.55 : d >= 4 ? 0.8 : 1), wolves: 0, bears: 0, dysentery: true,
+      client: { range: 35, legs: 3, hold: 30, drawTime: 1.4 },
+      areas: [Object.assign({}, CO_AREAS.bench, { miles: 0.6, blurb: 'Open parks close to the truck. Easy on Sam.' }),
+        Object.assign({}, CO_AREAS.burn, { miles: 1.6, blurb: 'Bulls bugle in the deadfall. Hard going for old legs.' }),
+        Object.assign({}, CO_AREAS.wallow, { miles: 1.1, blurb: 'North timber and a wallow. Bulls come in close here.' })],
+      camps: [camp('trailhead', 'Truck at the trailhead', 'Sam sleeps warm. Every walk is longer.', 1, 0, ['jug']),
         camp('creek', 'Creek camp', 'The old camp spot. Sam’s pick.', 0.8, 0.05, ['creek', 'spring'])],
-      elk: { cows: [3, 8], calves: 0.4, bull: 0.55, pts: [1, 2, 4, 5, 6] },
-      legal: a => (a.sp !== 'elk' ? 'wrong species' : a.sex === 'cow' ? 'Sam’s tag was a bull tag.' : null),
-      sam: ['Sam’s tag is a Colorado rifle bull tag. Any antlers.',
-        'He can’t walk far anymore, and he won’t shoot past 250 yards.',
-        'You pick the ground. He takes the shot.']
+      elk: { cows: [3, 8], calves: 0.35, bull: 0.75, pts: [1, 4, 5, 5, 6, 6, 7] },
+      legal: a => (a.sp !== 'elk' ? 'wrong species' : null),
+      sam: ['Sam’s tag is an over-the-counter archery elk tag. Either sex.',
+        'He wants to do it with his recurve, “like Hank and I used to.” He won’t shoot past 35 yards, and he says so.',
+        'You find the bulls, set him up, and call. He shoots.'],
+      days: ['Sam’s recurve leans on the truck. “Hank built the string. Don’t tell anybody it’s older than you.”',
+        'Peak rut. Bulls are talking everywhere. “Pick one,” Sam says. “One bull, one setup.”',
+        'At lunch Sam tells about the time Hank called a bull straight to him and then sneezed.',
+        'Somebody with a bugle tube is working the next ridge. “He sounds like a goose,” Sam says.',
+        'Sam’s knees are bad this morning. “Somewhere close, kid.”',
+        'The bulls have gone quiet. “They talked themselves out,” Sam says. “Now you sit and wait them out.”',
+        'Last day. Sam strings the recurve before the coffee’s done.']
     }
   ];
   BR.ch = () => BR.CHAPTERS[BR.S.chapter];
@@ -203,10 +225,9 @@
   BR.dayInfo = day => {
     const S = BR.S, r = BR.rng(S.seed * 31 + day * 977 + S.chapter * 131);
     const amDirs = ['NE', 'E', 'SW', 'W', 'N', 'SW'], pmDirs = ['SW', 'W', 'SW', 'NW', 'S', 'W'];
-    const ch = BR.ch(), rutLevel = ch.rut(day);
-    const rut = ch.species === 'moose' ? 'Moose rut' : rutLevel >= 1.8 ? 'Peak rut' : rutLevel >= 0.9 ? 'Rut building' : 'Post-rut';
+    const ch = BR.ch(), ph = BR.rutPhase(ch, day);
     const info = {
-      rut, rutLevel,
+      rut: ph.label, rutLevel: ph.level, date: BR.date(ch, day).label,
       am: { from: amDirs[(r() * amDirs.length) | 0], mph: 2 + Math.round(r() * 5) },
       pm: { from: pmDirs[(r() * pmDirs.length) | 0], mph: 4 + Math.round(r() * 7) },
       sky: ch.look === 'snow' ? pick(r, ['Snowing', 'Clear, cold', 'Grey, flurries']) : ch.look === 'ak' ? pick(r, ['Drizzle', 'Low clouds', 'Clear, cool']) : pick(r, ['Clear', 'Frost, clear', 'High clouds', 'Breezy'])
@@ -214,16 +235,22 @@
     info.howl = ch.wolves && r() < ch.wolves * 0.6 ? ch.areas[(r() * ch.areas.length) | 0].id : null;
     return info;
   };
-  BR.thermal = (clock, area) => (clock < area.sun ? 'down' : clock < 18.3 ? 'up' : 'down');
+  // Thermals in four phases: draining downhill until the sun hits the slope, rising through the morning,
+  // swirling mid-afternoon when the heat peaks, and draining again an hour before sunset.
+  BR.drainAt = () => { const l = BR.ch().light; return l ? l[1] - 1.5 : 18.3; };
+  BR.thermal = (clock, area) => (clock < area.sun ? 'down' : clock >= BR.drainAt() ? 'down' : clock >= 14 && clock < 16.5 ? 'swirl' : 'up');
   BR.scent = (area, clock) => {
     const d = BR.dayInfo(BR.S.day), w = clock >= 12 ? d.pm : d.am, wv = DIRS[w.from];
     const ww = Math.min(1, w.mph / 9), th = BR.thermal(clock, area), tw = 1 - ww * 0.6;
-    const x = -wv[0] * ww, y = -wv[1] * ww + (th === 'down' ? 1 : -1) * tw, m = Math.hypot(x, y) || 1;
+    let x = -wv[0] * ww, y = -wv[1] * ww + (th === 'down' ? 1 : th === 'up' ? -1 : 0) * tw;
+    if (th === 'swirl') { const a = Math.sin(clock * 41 + BR.S.day * 3.1) * 2.6, c = Math.cos(a), sn = Math.sin(a); [x, y] = [x * c - y * sn + 0.01, x * sn + y * c]; }
+    const m = Math.hypot(x, y) || 1;
     return { x: x / m, y: y / m, from: w.from, mph: w.mph, thermal: th };
   };
+  BR.thermalText = th => (th === 'swirl' ? 'swirling' : th + 'hill');
   BR.compass = (x, y) => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(((Math.atan2(x, -y) * 180 / Math.PI + 360) % 360) / 45) % 8];
   BR.conditions = () => {
     const d = BR.dayInfo(BR.S.day), w = BR.S.clock >= 12 ? d.pm : d.am;
-    return { rut: d.rut, rutLevel: d.rutLevel, from: w.from, mph: w.mph, sky: d.sky, howl: d.howl };
+    return { rut: d.rut, rutLevel: d.rutLevel, date: d.date, from: w.from, mph: w.mph, sky: d.sky, howl: d.howl };
   };
 })();

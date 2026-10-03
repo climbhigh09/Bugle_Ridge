@@ -5,8 +5,8 @@
   const angDiff = (a, b) => ((b - a + 540) % 360) - 180;
 
   const VOC = {
-    elk: { cow: 'Cow mew', estrus: 'Estrus whine', bugle: 'Bugle', rake: 'Rake a tree', answer: 'He bugles back, closer.', close: 'Brush cracks. Something’s coming.', far: 'Far off, a bugle. Then nothing.', hold: 'He chuckles but holds.' },
-    moose: { cow: 'Cow moose call', estrus: 'Cow grunt series', bugle: 'Bull grunt', rake: 'Rake the willows', answer: 'A deep grunt back, closer.', close: 'Willows crack and sway. Something’s coming.', far: 'A grunt far down the slough. Then nothing.', hold: 'He grunts and holds in the willows.' }
+    elk: { cow: 'Cow mew', estrus: 'Estrus whine', bugle: 'Challenge bugle', locate: 'Location bugle', rake: 'Rake a tree', answer: 'He bugles back, closer.', close: 'Brush cracks. Something’s coming.', far: 'Far off, a bugle. Then nothing.', hold: 'He chuckles but holds.' },
+    moose: { cow: 'Cow moose call', estrus: 'Cow grunt series', bugle: 'Bull grunt', locate: 'Single grunt', rake: 'Rake the willows', answer: 'A deep grunt back, closer.', close: 'Willows crack and sway. Something’s coming.', far: 'A grunt far down the slough. Then nothing.', hold: 'He grunts and holds in the willows.' }
   };
 
   let bgCache = null;
@@ -44,7 +44,9 @@
         if (Math.abs(angDiff(sb0, face)) < 60) face = sb0 + (r() < 0.5 ? 70 : -70);
         e.call = {
           present, animal: responder, herd: blind ? r() < 0.5 : a.bull === true, dist: Math.round(a.dist || 180 + r() * 160),
-          interest: blind ? 5 : 15, susp: 0, rel: face, face, hist: [], turns: 0, estrus: 0, pushed: false, angle: null, steam: 0, dead: false,
+          interest: blind ? 5 : 15, susp: 0, rel: face, face, hist: [], turns: 0, estrus: 0, estrusAt: [], pushed: false, angle: null, steam: 0, dead: false,
+          // R1: some bulls answer once and then come in without a sound, usually from downwind
+          silent: responder.sex === 'bull' && r() < 0.18 + (1 - ch.callShy(S.day)) * 0.5, answered: 0, hung: false,
           msg: blind ? 'You slip into cover and settle in.' : 'You set up in cover below them. Wind check.'
         };
       }
@@ -73,12 +75,13 @@
     },
     hud() {
       const S = BR.S, ch = BR.ch(), c = S.enc.call, v = this.voc, has = S.items;
-      const yd = !c.present || c.dist > 150 ? '<span class="dim">unseen</span>' : `≈${Math.round(c.dist / 5) * 5} yd`;
-      const scent = has.windChecker ? (() => { const sc = BR.scent(this.area, S.clock); return `<div class="row sm"><span>Scent drifting <span class="ok">${BR.compass(sc.x, sc.y)}</span> · thermals ${sc.thermal}hill</span></div>`; })() : '';
+      const hidden = !c.present || c.dist > 150 || (c.silent && c.answered && c.dist > 60);
+      const yd = hidden ? '<span class="dim">unseen</span>' : `≈${Math.round(c.dist / 5) * 5} yd`;
+      const scent = has.windChecker ? (() => { const sc = BR.scent(this.area, S.clock); return `<div class="row sm"><span>Scent drifting <span class="ok">${BR.compass(sc.x, sc.y)}</span> · thermals ${BR.thermalText(sc.thermal)}</span></div>`; })() : '';
       const canShoot = c.present && c.dist <= Math.min(BR.maxShot(), ch.weapon === 'bow' ? 60 : 200);
       const locked = c.dead, estrusOK = ch.species === 'moose' || has.reeds;
       BR.hud(`
-        <div class="row"><span class="t">CALLING · ${BR.dayInfo(S.day).rut.toUpperCase()}</span><span class="hi">${yd}</span></div>
+        <div class="row"><span class="t">CALLING · ${BR.dayInfo(S.day).date.toUpperCase()} · ${BR.dayInfo(S.day).rut.toUpperCase()}</span><span class="hi">${yd}</span></div>
         <div class="row sm"><span class="${c.turns ? 'toast' : 'dim'}">${c.msg}</span></div>
         ${scent}
         <div class="sp"></div>
@@ -86,27 +89,42 @@
         <div class="g2">
           ${BR.btn('cow', v.cow, '', null, locked)}
           ${BR.btn('estrus', estrusOK ? v.estrus : v.estrus + ' (reeds)', '', null, locked || !estrusOK)}
+          ${BR.btn('locate', v.locate, '', null, locked)}
           ${BR.btn('bugle', v.bugle, '', null, locked)}
           ${BR.btn('rake', v.rake, '', null, locked)}
-          ${BR.btn('wait', 'Wait quietly', '', null, locked)}
+          ${BR.btn('wait', 'Go silent · 10 min', '', null, locked)}
+          ${BR.btn('backoff', 'Back off, calling', '', null, locked)}
           ${c.dist <= 200 && c.present && !locked ? BR.btn('move', 'Slip crosswind') : BR.btn('leave', 'Leave', locked ? 'go' : '')}
         </div>`);
     },
     act(a) {
       const S = BR.S, e = S.enc, c = e.call;
-      if (a === 'leave') { if (!c.present) BR.log('noelk', { area: e.area, via: 'call' }); BR.endHunt(); return; }
-      if (a === 'shoot') { e.shot = { options: [{ a: c.animal, range: Math.round(c.dist), angle: c.angle || 'broadside' }], i: 0, from: 'call', alert: c.susp }; BR.go('shot'); return; }
+      if (a === 'leave') {
+        // R1: a silent bull that was still coming walks into the setup after you're gone
+        if (c.present && c.silent && c.answered && !c.dead && c.interest - c.susp > 10 && c.dist < 220) { this.end({ kind: 'leftEarly', yd: Math.round(c.dist) }); return; }
+        if (!c.present) BR.log('noelk', { area: e.area, via: 'call' });
+        BR.endHunt(); return;
+      }
+      if (a === 'shoot') { e.shot = { options: [{ a: c.animal, range: Math.round(c.dist), angle: c.angle || 'broadside' }], i: 0, from: 'call', alert: c.susp, walking: c.walking !== false }; BR.go('shot'); return; }
       this.turn(a);
     },
     turn(action) {
       const S = BR.S, ch = BR.ch(), e = S.enc, c = e.call, v = this.voc, rut = ch.rut(S.day) * ch.callShy(S.day), r = Math.random;
-      BR.pass(action === 'wait' ? 8 : action === 'move' ? 6 : 4);
+      BR.pass(action === 'wait' ? 10 : action === 'move' || action === 'backoff' ? 6 : action === 'rake' ? 5 : 4);
       c.turns++; c.steam = 0;
-      const calls = ['cow', 'estrus', 'bugle'], recent = c.hist.slice(-3).filter(h => calls.includes(h)).length;
+      const calls = ['cow', 'estrus', 'bugle', 'locate'], recent = c.hist.slice(-3).filter(h => calls.includes(h)).length;
       c.hist.push(action);
       let msg = '';
       if (S.part === 'evening' && S.clock >= BR.dark()) return this.end({ kind: 'dark' });
       if (S.part === 'morning' && S.clock >= 11.5) { c.msg = 'Midday. Everything’s bedded.'; c.dead = true; return this.after(); }
+      // R12: in grizzly country, calling sometimes brings a bear instead of a bull
+      if (ch.bears && action !== 'wait' && action !== 'move' && r() < ch.bears * 0.03 * (this.area.bear ? 2 : 1)) {
+        const res = BR.bearCharge(e.area);
+        if (res !== 'gone') return this.end({ kind: res === 'sprayed' ? 'sprayed' : res === 'blowback' ? 'blowback' : 'charge', where: 'call' });
+      }
+      // R13: a side-by-side or another hunter walks in on the setup
+      const pr = ch.pressure ? ch.pressure(S.day) : 0;
+      if (c.present && c.turns > 1 && r() < pr * 0.035) return this.end({ kind: 'bumped', cause: ch.weapon === 'rifle' || r() < 0.5 ? 'atv' : 'hunter' });
       if (!c.present) {
         msg = action === 'wait' ? 'A squirrel chatters. Nothing else.' : r() < 0.25 ? v.far : 'Nothing answers.';
         if (c.turns >= 6) { msg = 'Nothing’s answering here. Try another spot.'; c.dead = true; }
@@ -114,8 +132,17 @@
       }
       const d = c.dist, bull = c.animal.sex === 'bull';
       if (action === 'cow') { c.interest += 10 + 6 * rut + (d < 70 ? 8 : 0); if (recent >= 2) { c.susp += 12; msg = 'That’s a lot of calling for one cow. '; } }
-      else if (action === 'estrus') { c.estrus++; c.interest += (bull ? 12 + 14 * (rut - 1) : 2); c.susp += c.estrus >= 2 ? 14 : 3; }
-      else if (action === 'bugle') {
+      else if (action === 'estrus') {
+        // R4: two whines in a few minutes is a hot cow; more than that sounds wrong
+        c.estrus++; c.estrusAt.push(S.clock);
+        const burst = c.estrusAt.filter(t => S.clock - t < 0.15).length;
+        if (burst > 2) { c.susp += 22; msg = 'Too much whining in too little time. '; } else { c.interest += (bull ? 12 + 14 * (rut - 1) : 2); c.susp += 2; }
+      } else if (action === 'locate') {
+        // R3: a short location bugle finds bulls far off without pushing them
+        if (!bull) { c.susp += 4; }
+        else if (d > 150) { c.interest += 6 + 4 * rut; msg = 'He answers, far off. '; }
+        else { c.interest += 2; }
+      } else if (action === 'bugle') {
         if (!bull) { c.susp += 10; msg = 'She stops and stares toward the sound. '; }
         else if (c.herd) {
           if (d > 120) { c.interest += 8 + 8 * rut; if (r() < 0.3) { c.dist += 35; c.pushed = true; msg = 'He answers and pushes his cows away. '; } }
@@ -124,9 +151,16 @@
         } else if (d < 150) { c.interest -= 10; c.susp += 6; msg = 'He goes quiet. You may have scared him. '; }
         else c.interest += 6;
         if (recent >= 2) c.susp += 8;
-      } else if (action === 'rake') { c.interest += d < 110 ? (bull ? 16 : 4) : 4; c.susp = Math.max(0, c.susp - 3); }
+      } else if (action === 'rake') { c.interest += d < 110 ? (bull ? 18 : 4) : 5; c.susp = Math.max(0, c.susp - 8); msg = 'You rake and snap branches for two minutes, like a real bull. '; }
+      else if (action === 'backoff') {
+        // R2: back away while calling so he has to come forward to find the cow
+        c.dist += 30;
+        if (c.hung) { c.hung = false; c.interest += 18; c.susp = Math.max(0, c.susp - 10); msg = 'You back off, mewing. He follows the sound. '; }
+        else msg = 'You back off 30 yards, mewing as you go. ';
+      }
       else if (action === 'wait') {
-        c.susp = Math.max(0, c.susp - 10); if (d > 110) c.interest -= 3;
+        c.susp = Math.max(0, c.susp - 12); if (d > 110 && !c.silent) c.interest -= 3;
+        if (c.hung && r() < 0.45) { c.hung = false; c.silent = true; c.interest += 8; msg = 'Twenty minutes of nothing. Then a branch cracks. '; }
         if (d <= 60 && c.angle !== 'broadside' && r() < 0.5) { c.angle = 'broadside'; msg = 'Turns broadside, looking for the call. '; }
       } else if (action === 'move') {
         const sc0 = BR.scent(this.area, S.clock), sb = Math.atan2(sc0.x, -sc0.y) * 180 / Math.PI, df = angDiff(sb, c.rel);
@@ -136,14 +170,21 @@
       c.interest = BR.clamp(c.interest, 0, 100); c.susp = BR.clamp(c.susp, 0, 100);
       const net = c.interest - c.susp;
       if (action !== 'move') {
-        if (net > 20) {
-          if (c.dist < 95 && r() < 0.3 && action !== 'rake' && action !== 'cow') msg += `Hangs up at ${Math.round(c.dist / 5) * 5} yards, looking for the call.`;
-          else { c.dist = Math.max(18, c.dist - (18 + r() * 30)); msg += bull && r() < 0.35 + rut * 0.2 ? v.answer : v.close; c.steam = 1; }
+        if (c.hung && action !== 'backoff') msg += r() < 0.5 ? v.hold : `Still hung up at ${Math.round(c.dist / 5) * 5} yards, looking for the cow.`;
+        else if (net > 20) {
+          if (c.dist < 95 && c.dist > 60 && !c.hungOnce && r() < 0.35 && action !== 'rake') { c.hung = c.hungOnce = true; msg += `Hangs up at ${Math.round(c.dist / 5) * 5} yards. He can’t see a cow.`; }
+          else {
+            c.dist = Math.max(18, c.dist - (18 + r() * 30)); c.answered++;
+            if (c.silent && c.answered > 1) msg += c.dist <= 60 ? 'Antlers in the timber. He came in without a sound.' : r() < 0.5 ? 'Nothing. Not a sound.' : 'Silence.';
+            else { msg += bull && r() < 0.35 + rut * 0.2 ? v.answer : v.close; c.steam = 1; }
+            if (c.silent && c.answered > 1) { const sc1 = BR.scent(this.area, S.clock), sb1 = Math.atan2(sc1.x, -sc1.y) * 180 / Math.PI; c.rel += Math.sign(angDiff(c.rel, sb1)) * 12; }
+          }
         } else if (net < -10) { c.dist += 25 + r() * 30; msg += 'Quiet. It’s drifting away.'; }
         else msg += r() < 0.5 ? v.hold : 'Silence. Thinking about it.';
       }
       const sc = BR.scent(this.area, S.clock), sb = Math.atan2(sc.x, -sc.y) * 180 / Math.PI, offWind = Math.abs(angDiff(sb, c.rel));
       if (c.dist < 200 && c.interest > 25 && action !== 'move' && offWind > 30 && r() < 0.3) { const df = angDiff(c.rel, sb); c.rel += Math.sign(df) * Math.min(Math.abs(df) - 10, 15 + r() * 10); msg += ' Swinging downwind.'; }
+      if (c.dist <= 60 && !c.angle) c.walking = r() < 0.6;
       if (c.dist <= 60 && !c.angle) c.angle = r() < 0.45 ? 'quartering-to' : r() < 0.5 ? 'quartering-away' : 'broadside';
       if (c.dist <= 45 && calls.includes(action) && r() < 0.35) c.susp += 20;
       c.msg = msg;
