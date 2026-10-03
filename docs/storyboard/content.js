@@ -57,15 +57,15 @@
       hank: '“Brows first. Spread lies to you on the water. Brows don’t.”'
     },
     {
-      id: 'ch6', num: 'Epilogue', name: 'The fire', sub: 'Grandpa Sam’s hunt',
-      pitch: 'Back in Colorado, with some grey in your beard. Your grandfather Sam, who hunted this country with Hank decades ago, wants one more elk season. His legs are slow and his eyes are good. You pick the ground, the camp and the shot he can make. At night you give the debrief. Replayable after the campaign.',
-      frame: 'Night camp. You sit where Hank sat, with Hank’s mug. Grandpa Sam sits across the fire with his old .30-06 across his knees.',
-      law: 'Sam’s tag, your call. The same rules apply to him: an illegal animal ends the season, a wounded one costs the day.',
-      threat: 'Old legs on the steep stuff. Plan hunts he can walk, and a shot he can make.',
-      harder: 'Reverse debrief: pick the one thing that went wrong on Sam’s hunt. Get it right and he does better the next day.',
-      mech: 'Guide mode, the reverse debrief, free-play for any unlocked state.',
-      gear: 'Hank’s old mug. Sam’s .30-06, the one you started with.',
-      hank: 'Sam: “Hank used to say that exact thing.”'
+      id: 'ch6', num: 'Epilogue · September', name: 'Calling for Sam', sub: 'You guide, Sam shoots',
+      pitch: 'A full seven-day archery season back in Colorado. Grandpa Sam, who hunted this country with Hank, carries his old recurve. You locate the bulls, place Sam, call, and signal his draw. At night you give the debrief, and he gives you one. See the full storyboard at the top of this page.',
+      frame: 'Over Sam’s shoulder at full draw. You mewed, and the bull stopped broadside at 28 yards.',
+      law: 'Sam’s tag: an over-the-counter archery elk tag, either sex. The same rules apply: an illegal animal ends the season, a lost one costs a day.',
+      threat: 'Your own calling. Overcall, place Sam on the wrong side of the wind, or signal at the wrong moment, and the bull never reaches him.',
+      harder: 'Bulls hang up at 80 yards, circle downwind, and go silent after day 5. Sam has 35 yards, a 5-second hold, and about 3 miles of legs a day.',
+      mech: 'The setup map (place the shooter and caller), two-person calling, draw signals, mew-to-stop, and the two-way debrief.',
+      gear: 'Sam’s recurve with the string Hank built. Your calls. Hank’s mug.',
+      hank: 'Sam: “You called that one in like Hank used to. Then you called it right back out.”'
     }
   ];
 

@@ -120,36 +120,18 @@
     label(g, 8, 8, 'SPREAD 48–52" · BROWS: 3? 4?');
   })();
 
-  // Epilogue — the fire: you in Hank's seat with his mug, Sam across with the Scout bow
+  // Epilogue — Calling for Sam: over his shoulder at full draw, bull stopped broadside at 28 yd (game sprites)
   (function () {
     const g = ctx('ch6'); if (!g) return;
-    X.sky(g, W, [[0, '#06080f'], [170, '#141a2a']], H);
-    const r = X.rng(44); for (let i = 0; i < 120; i++) R(g, r() * W, r() * 150, 1, 1, r() < 0.25 ? '#e8e0cc' : '#6a6878');
-    X.ridge(g, W, H, 150, 14, 0.02, 1.2, '#121828');
-    for (let x = 0; x < W; x += 5) X.pine(g, x, 196 + ((x * 3) % 6), 26 + ((x * 7) % 14), '#0a0f12');
-    R(g, 0, 196, W, 124, '#0e120e');
-    for (let y = 196; y < H; y++) for (let x = 0; x < W; x++) { const d = Math.hypot(x - 120, (y - 262) * 1.6) / 90; if (d < 1 && X.dith(x, y) > d) R(g, x, y, 1, 1, d < 0.25 ? '#8a5430' : d < 0.55 ? '#5a3a22' : '#2e2217'); }
-    // logs + fire
-    R(g, 20, 262, 60, 8, '#4a3624'); R(g, 20, 262, 60, 2, '#7a5a3a'); R(g, 160, 262, 60, 8, '#4a3624'); R(g, 160, 262, 60, 2, '#7a5a3a');
-    R(g, 104, 272, 32, 4, '#3a281a'); R(g, 108, 270, 24, 3, '#5a3e28');
-    const fw = [1, 2, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 8, 7];
-    fw.forEach((w, j) => { R(g, 120 - w, 256 + j, w * 2 + 1, 1, '#d8602e'); if (w > 2) R(g, 121 - w + 1, 256 + j, (w - 1) * 2, 1, '#f2b04a'); if (w > 5) R(g, 117, 256 + j, 6, 1, '#fff0c8'); });
-    // you (guide), seated left, facing right: hat, grey beard, plaid coat, mug
-    const Y = (x, y, w, h, c) => R(g, 34 + x, 216 + y, w, h, c);
-    Y(4, 0, 16, 2, '#3b2f22'); Y(7, -6, 10, 7, '#5a4630'); Y(7, -2, 10, 1, '#2a2016');
-    Y(8, 2, 9, 8, '#c49a74'); Y(14, 2, 3, 8, '#9a7456'); Y(13, 5, 1, 1, '#1a120c');
-    Y(8, 8, 10, 5, '#b8b2a6'); Y(10, 12, 6, 2, '#8a857a');
-    Y(5, 14, 14, 18, '#8e3c2e'); Y(5, 14, 5, 18, '#a8483a'); Y(15, 14, 4, 18, '#6c2c22'); for (let k = 0; k < 18; k += 4) Y(5, 14 + k, 14, 1, '#c0685a');
-    Y(18, 22, 8, 4, '#6c2c22'); Y(25, 20, 5, 6, '#d0d0c8'); Y(30, 21, 2, 3, '#8a8a84'); Y(26, 17, 1, 2, '#7a7e82');
-    Y(6, 32, 22, 6, '#3d4d64'); Y(22, 38, 6, 8, '#3d4d64'); Y(21, 45, 9, 3, '#2a1e14');
-    // Grandpa Sam, seated right, facing left: felt hat, white beard, wool shirt, old rifle across his knees
-    const S = (x, y, w, h, c) => R(g, 170 + x, 222 + y, w, h, c);
-    S(-1, -4, 16, 2, '#3b2f22'); S(2, -9, 10, 6, '#5a4a38'); S(2, -4, 10, 1, '#2a2016');
-    S(3, -2, 9, 8, '#c49a74'); S(3, -2, 2, 8, '#9a7456'); S(5, 1, 1, 1, '#1a120c');
-    S(2, 4, 10, 5, '#e4e0d8'); S(4, 8, 6, 2, '#b8b4ac');
-    S(0, 10, 14, 17, '#4e5e6e'); S(10, 10, 4, 17, '#62727e'); S(0, 10, 3, 17, '#3a4854'); for (let k = 0; k < 17; k += 4) S(0, 10 + k, 14, 1, '#3a4854');
-    S(-8, 27, 22, 5, '#4a4232'); S(-8, 32, 5, 8, '#4a4232'); S(-10, 39, 8, 3, '#1e150e');
-    X.thick(g, 146, 250, 196, 244, 2, '#5a3e24'); X.thick(g, 146, 250, 160, 248, 1, '#2a2a2a');
-    label(g, 8, 8, 'NIGHT 1 · YOUR DEBRIEF');
+    X.sky(g, W, [[0, '#2a3350'], [70, '#55536e'], [118, '#c98a5e']], H);
+    X.ridge(g, W, H, 104, 12, 0.025, 2.4, '#4c4a66');
+    X.ridge(g, W, H, 128, 8, 0.04, 3.2, '#33402f');
+    for (let x = -2; x < W; x += 6) X.pine(g, x, X.ry(x, 156, 5, 0.06, 2) + 10, 20 + ((x * 7) % 14), '#1c2c21');
+    X.sky(g, W, [[160, '#5f6b3e'], [230, '#4e5c36'], [320, '#34402a']]);
+    X.grass(g, W, H, 162, 2200, 11, ['#7a7e4a', '#62703f', '#4e5c36', '#8c8250']);
+    const SPR = window.BR.SPR;
+    SPR.draw(g, SPR.get({ sp: 'elk', sex: 'bull', pts: 6 }, 'stand', 0.95), 160, 250);
+    window.BR.person(g, 'sam', 'draw', 46, 345, 2.4);
+    label(g, 8, 8, 'YOU MEWED · HE STOPPED · 28 YD');
   })();
 })();

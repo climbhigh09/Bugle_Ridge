@@ -145,3 +145,22 @@ ul.q li::before{content:"";position:absolute;left:0;top:.62em;width:7px;height:7
 footer.end{padding-block:28px 52px;border-top:1px solid var(--line-soft);font:500 12px/1.5 var(--f-mono);color:var(--faint)}
 
 .ramp.review td{white-space:normal;vertical-align:top}.ramp.review td.dial small{max-width:44ch}.ramp.review td:last-child{min-width:260px}.ramp .note.bad-t{color:var(--blood)}
+
+/* draft 5: guide season beats */
+.gbeats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 22px}
+@media (max-width:980px){.gbeats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.gbeats{grid-template-columns:minmax(0,1fr)}}
+.gbeat{display:grid;gap:12px;align-content:start}
+.gbeat canvas{width:100%;height:auto;aspect-ratio:3/4;border:1px solid var(--line);background:#000}
+.gtext{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline}
+.gtext p{grid-column:2;font-size:15px;line-height:1.45}
+.gnum{font:600 22px/1 var(--f-pixel);color:var(--amber)}
+.gtext h3{font:600 22px/1.1 var(--f-cond)}
+.gtext .rule{color:var(--muted);font-size:14px}
+ol.days{list-style:none;margin:0;padding:0;display:grid;gap:0}
+ol.days li{display:grid;grid-template-columns:64px 1fr;gap:6px 14px;padding:9px 0;border-top:1px solid var(--line-soft);font-size:15px}
+ol.days li:first-child{border-top:0}
+ol.days b{font:600 16px/1.3 var(--f-pixel);color:var(--amber)}
+.ramp td.rid{font:600 16px/1.2 var(--f-pixel);color:var(--amber);width:40px}
+.ramp a{color:var(--sky);text-decoration-color:rgba(127,163,196,.4);text-underline-offset:3px;white-space:nowrap}
+.ramp a:hover{color:var(--bone)}
